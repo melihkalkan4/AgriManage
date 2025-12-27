@@ -18,23 +18,26 @@
     <link rel="stylesheet" href="~/AgriManage.styles.css" asp-append-version="true" />
 
     <style>
-        @@media all and (min-width: 992px) {
-            .navbar .nav-item:hover > .dropdown-menu {
+          @@media all and (min-width: 992px) {
+            .navbar .nav-item:hover > .dropdown-menu
+
+        {
+            display: block;
+            margin-top: 0;
+        }
+
+        .dropdown-menu .dropend {
+            position: relative;
+        }
+
+            .dropdown-menu .dropend:hover > .dropdown-menu {
                 display: block;
-                margin-top: 0;
+                position: absolute;
+                top: 0;
+                left: 100%;
+                margin-top: -5px;
             }
 
-            .dropdown-menu .dropend {
-                position: relative;
-            }
-
-                .dropdown-menu .dropend:hover > .dropdown-menu {
-                    display: block;
-                    position: absolute;
-                    top: 0;
-                    left: 100%;
-                    margin-top: -5px;
-                }
         }
 
         .navbar-brand {
@@ -134,7 +137,14 @@
                                             <i class="fa-solid fa-boxes-stacked text-primary me-2"></i> Stok & Lojistik
                                         </a>
                                         <ul class="dropdown-menu">
-                                            <li><a class="dropdown-item" asp-controller="Stok" asp-action="Index">Ürün Stokları</a></li>
+                                            <li>
+                                                <a class="dropdown-item fw-bold" asp-controller="Envanter" asp-action="Index">
+                                                    <i class="fa-solid fa-microchip text-primary me-2"></i> Envanter (Mikroservis)
+                                                </a>
+                                            </li>
+
+                                            <li><hr class="dropdown-divider"></li>
+
                                             <li><a class="dropdown-item" asp-controller="Stok" asp-action="Dashboard">Stok Analizi</a></li>
                                         </ul>
                                     </li>

@@ -1,0 +1,61 @@
+﻿@model List<AgriManage.WebApp.DTOs.UrunDto>
+
+@{
+    ViewData["Title"] = "Envanter Yönetimi";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>🚜 Envanter Listesi (Mikroservis)</h2>
+        <a href="#" class="btn btn-primary">+ Yeni Ürün Ekle</a>
+    </div>
+
+    <table class="table table-hover table-bordered shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Ürün Adı</th>
+                <th>Stok Adedi</th>
+                <th>Birim Fiyat</th>
+                <th>Sahibi</th>
+                <th>İşlemler</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model != null && Model.Any())
+            {
+                foreach (var urun in Model)
+                {
+                    <tr>
+                        <td>@urun.Id</td>
+                        <td class="fw-bold">@urun.Name</td>
+                        <td>
+                            @if (urun.StockQuantity < 10)
+                            {
+                                <span class="badge bg-danger">Kritik: @urun.StockQuantity</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">@urun.StockQuantity adet</span>
+                            }
+                        </td>
+                        <td>@urun.Price.ToString("C2")</td>
+                        <td>@urun.OwnerId</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning">Düzenle</button>
+                            <button class="btn btn-sm btn-danger">Sil</button>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center text-muted">
+                        Henüz hiç ürün eklenmemiş veya servise ulaşılamıyor.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

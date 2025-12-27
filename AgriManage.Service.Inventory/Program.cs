@@ -1,22 +1,57 @@
+ï»¿using Microsoft.EntityFrameworkCore;
 using AgriManage.Service.Inventory.Data;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer; // JWT paketi
+using Microsoft.IdentityModel.Tokens;              // Token doÄŸrulama araÃ§larÄ±
+using System.Text;                                 // Encoding (UTF8) iÃ§in
 
-// 1. ADIM: Önce Builder oluþturulur (Senin hatan bu satýrýn aþaðýda kalmasýydý)
 var builder = WebApplication.CreateBuilder(args);
 
-// 2. ADIM: Servisler eklenir (Veritabaný baðlantýsý burada yapýlýr)
+// =========================================================
+// 1. VERÄ°TABANI BAÄžLANTISI (Aynen KalsÄ±n)
+// =========================================================
 builder.Services.AddDbContext<InventoryDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Diðer servisler (Controller, Swagger vb.)
+// =========================================================
+// 2. JWT KÄ°MLÄ°K DOÄžRULAMA (YENÄ° EKLENEN KISIM) ðŸ”’
+// =========================================================
+// appsettings.json'dan ayarlarÄ± okuyoruz
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings["SecretKey"];
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,     // Kimin imzaladÄ±ÄŸÄ±nÄ± kontrol et (WebApp mi?)
+        ValidateAudience = true,   // Kime gÃ¶nderildiÄŸini kontrol et (Bana mÄ±?)
+        ValidateLifetime = true,   // SÃ¼resi dolmuÅŸ mu?
+        ValidateIssuerSigningKey = true, // Ä°mza geÃ§erli mi?
+
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+    };
+});
+
+// =========================================================
+// 3. DÄ°ÄžER SERVÄ°SLER
+// =========================================================
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 3. ADIM: Uygulama inþa edilir (Build)
 var app = builder.Build();
 
-// 4. ADIM: HTTP Ýstek hattý (Pipeline) ayarlanýr
+// =========================================================
+// 4. PIPELINE (SIRASI Ã‡OK Ã–NEMLÄ°!)
+// =========================================================
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -25,7 +60,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
+// DÄ°KKAT: Authentication (Kimlik Sorma) mutlaka Authorization'dan (Yetki Verme) Ã–NCE gelmeli.
+app.UseAuthentication(); // ðŸ‘ˆ KapÄ±daki GÃ¼venlik (Kimsin?)
+app.UseAuthorization();  // ðŸ‘ˆ Ä°Ã§erdeki Yetki (Girebilir misin?)
 
 app.MapControllers();
 

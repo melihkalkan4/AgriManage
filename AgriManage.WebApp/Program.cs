@@ -51,6 +51,18 @@ builder.Services.AddScoped<IAnalizService, AnalizService>(); // --- YENİ EKLENE
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IVardiyaService, VardiyaService>();
 
+// --- MİKROSERVİS BAĞLANTISI BAŞLANGIÇ ---
+// API ile haberleşmek için HttpClient servisini ekliyoruz.
+// Bu sayede Controller'lar "bana InventoryClient ver" diyebilecek.
+// Token servisini sisteme tanıtıyoruz
+builder.Services.AddScoped<AgriManage.WebApp.Services.TokenService>();
+builder.Services.AddHttpClient("InventoryClient", client =>
+{
+    // appsettings.json'dan adresi okuyoruz (https://localhost:7096)
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:InventoryBaseUrl"]);
+});
+// --- MİKROSERVİS BAĞLANTISI BİTİŞ ---
+
 
 // ============================================================
 // 4. MVC VE G�R�N�M AYARLARI

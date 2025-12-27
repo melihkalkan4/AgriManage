@@ -2,11 +2,13 @@
 using AgriManage.Service.Inventory.Data;
 using AgriManage.Service.Inventory.Models;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AgriManage.Service.Inventory.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] // <--- 2. İŞTE KİLİT BURASI!
     public class ProductsController : ControllerBase
     {
         private readonly InventoryDbContext _context;
