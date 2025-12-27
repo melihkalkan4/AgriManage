@@ -1,0 +1,6 @@
+@AgriManage.Service.Inventory_HostAddress = http://localhost:5086
+
+GET {{AgriManage.Service.Inventory_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
