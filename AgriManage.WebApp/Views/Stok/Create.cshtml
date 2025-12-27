@@ -1,0 +1,138 @@
+﻿@model AgriManage.DataAccess.Models.StokItem
+
+@{
+    ViewData["Title"] = "Yeni Stok Kartı Tanımla";
+}
+
+<div class="container-fluid mt-4 px-lg-5">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb bg-transparent p-0">
+                    <li class="breadcrumb-item"><a asp-action="Dashboard" class="text-decoration-none">Stok Paneli</a></li>
+                    <li class="breadcrumb-item active">Yeni Stok Kartı</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-dark text-white py-3 px-4 rounded-top">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary p-2 rounded-circle me-3">
+                            <i class="fa-solid fa-boxes-stacked fa-lg text-white"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-0 fw-bold">Detaylı Stok Kartı Kaydı</h4>
+                            <p class="mb-0 text-white-50 small">Envanterdeki ürünlerin miktar, depo ve kritik eşik tanımlamalarını yapın.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 bg-white">
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger border-0 shadow-sm mb-4" role="alert"></div>
+
+                        <div class="row g-4">
+                            <div class="col-lg-7 border-end pe-lg-4">
+                                <h5 class="text-primary fw-bold mb-4 border-bottom pb-2">
+                                    <i class="fa-solid fa-tag me-2"></i>Genel Bilgiler
+                                </h5>
+
+                                <div class="mb-3">
+                                    <label asp-for="Ad" class="form-label fw-bold">Ürün / Malzeme Adı</label>
+                                    <input asp-for="Ad" class="form-control form-control-lg border-2 shadow-sm" placeholder="Örn: 20-20-0 Kompoze Gübre..." />
+                                    <span asp-validation-for="Ad" class="text-danger small"></span>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Stok Kategorisi</label>
+                                        <select asp-for="StokKategorisiId" class="form-select border-2 shadow-sm" asp-items="ViewBag.StokKategorisiId">
+                                            <option value="">-- Kategori Seçiniz --</option>
+                                        </select>
+                                        <span asp-validation-for="StokKategorisiId" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Ölçü Birimi</label>
+                                        <select asp-for="Birim" class="form-select border-2 shadow-sm">
+                                            <option value="Kg">Kilogram (Kg)</option>
+                                            <option value="Litre">Litre (L)</option>
+                                            <option value="Adet">Adet</option>
+                                            <option value="Ton">Ton</option>
+                                            <option value="Metre">Metre</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Ürün Açıklaması</label>
+                                    <textarea asp-for="Aciklama" class="form-control border-2 shadow-sm" rows="4" placeholder="Ürün içeriği, kullanım amacı veya özel saklama koşulları..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-5 ps-lg-4">
+                                <h5 class="text-success fw-bold mb-4 border-bottom pb-2">
+                                    <i class="fa-solid fa-warehouse me-2"></i>Lojistik ve Takip
+                                </h5>
+
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold text-success">Depolama Alanı</label>
+                                    <select asp-for="DepoId" class="form-select border-success border-2 shadow-sm" asp-items="ViewBag.DepoId">
+                                        <option value="">-- Depo Seçiniz --</option>
+                                    </select>
+                                    <span asp-validation-for="DepoId" class="text-danger small"></span>
+                                </div>
+
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Mevcut Miktar</label>
+                                        <div class="input-group">
+                                            <input asp-for="Miktar" type="number" step="0.01" class="form-control border-2 shadow-sm fw-bold text-primary" value="0" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-danger">Kritik Stok Sınırı</label>
+                                        <input asp-for="KritikStokSeviyesi" type="number" class="form-control border-2 border-danger shadow-sm" placeholder="Uyarı Limiti" />
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Raf / Seksiyon No</label>
+                                    <input asp-for="RafNo" class="form-control border-2 shadow-sm" placeholder="Örn: Bölüm B, Raf 4" />
+                                </div>
+
+                                <div class="p-3 bg-light rounded-3 border-start border-4 border-info mt-4">
+                                    <div class="d-flex">
+                                        <i class="fa-solid fa-circle-info text-info me-3 mt-1 fa-lg"></i>
+                                        <div>
+                                            <p class="mb-0 small text-muted">Stok miktarı <strong>Kritik Sınır</strong> değerinin altına düştüğünde, sistem ana menüde otomatik uyarı verecektir.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4 opacity-25">
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a asp-action="Index" class="btn btn-outline-secondary px-4 rounded-pill">
+                                <i class="fa-solid fa-arrow-left me-2"></i>Envanter Listesine Dön
+                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="reset" class="btn btn-light px-4 rounded-pill">Formu Temizle</button>
+                                <button type="submit" class="btn btn-primary btn-lg px-5 rounded-pill shadow">
+                                    <i class="fa-solid fa-check-double me-2"></i>Stok Kartını Oluştur
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

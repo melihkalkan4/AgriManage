@@ -1,0 +1,56 @@
+﻿@model AgriManage.DataAccess.Models.Gorev
+
+@{
+    ViewData["Title"] = "Yeni İş Emri";
+}
+
+<div class="container mt-4">
+    <div class="card shadow border-0">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Yeni İş Emri Oluştur</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Personel</label>
+                        <select asp-for="PersonelId" class="form-select" asp-items="ViewBag.PersonelId"></select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Tarla</label>
+                        <select asp-for="TarlaId" class="form-select" asp-items="ViewBag.TarlaId"></select>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label class="form-label fw-bold">Görev Başlığı</label>
+                        <input asp-for="Baslik" class="form-control" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Kullanılacak Ekipman</label>
+                        <select asp-for="EkipmanId" class="form-select" asp-items="ViewBag.EkipmanId">
+                            <option value="">-- Yok --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Stok Kullanımı</label>
+                        <select asp-for="StokItemId" class="form-select" asp-items="ViewBag.StokItemId">
+                            <option value="">-- Yok --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Miktar</label>
+                        <input asp-for="PlanlananStokMiktari" type="number" class="form-control" value="0" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Tahmini Süre (Saat)</label>
+                        <input asp-for="TahminiSureSaat" type="number" class="form-control" value="1" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">Tarih</label>
+                        <input asp-for="PlanlananBaslangic" type="date" class="form-control" />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Kaydet</button>
+            </form>
+        </div>
+    </div>
+</div>

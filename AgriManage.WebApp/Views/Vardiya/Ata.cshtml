@@ -1,0 +1,56 @@
+﻿@{
+    ViewData["Title"] = "Vardiya Ata";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fa-solid fa-user-clock me-2"></i>Personel Vardiya Atama</h5>
+                </div>
+                <div class="card-body p-4">
+
+                    @if (TempData["basarili"] != null)
+                    {
+                        <div class="alert alert-success">@TempData["basarili"]</div>
+                    }
+
+                    <form asp-action="Ata" method="post">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Personel Seçiniz</label>
+                            <select name="PersonelId" class="form-select" asp-items="ViewBag.Personeller" required>
+                                <option value="">-- Personel --</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Gün Seçiniz</label>
+                            <select name="Gun" class="form-select" asp-items="ViewBag.Gunler" required>
+                                <option value="">-- Gün --</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Vardiya Tipi</label>
+                            <select name="VardiyaId" class="form-select" asp-items="ViewBag.Vardiyalar" required>
+                                <option value="">-- Sabah / Akşam --</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fa-solid fa-save me-2"></i> Atamayı Kaydet
+                            </button>
+                            <a asp-action="Program" class="btn btn-light">İptal</a>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-light">
+                    <small class="text-muted"><i class="fa-solid fa-circle-info me-1"></i> Aynı personele aynı gün için yeni atama yaparsanız, eski kayıt güncellenir.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,56 @@
+﻿@model AgriManage.DataAccess.Models.EkimPlani
+
+@{
+    ViewData["Title"] = "Hasat Girişi";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-0">
+                <div class="card-header bg-warning text-dark py-3">
+                    <h4 class="mb-0 fw-bold"><i class="fa-solid fa-sickle me-2"></i>Hasat Girişi</h4>
+                </div>
+                <div class="card-body p-4">
+
+                    <div class="alert alert-warning border-warning bg-opacity-10 mb-4">
+                        <h5 class="alert-heading fw-bold">@Model.Tarla?.Ad</h5>
+                        <p class="mb-0">
+                            Bu tarladaki <strong>@Model.Urun?.Ad</strong> hasadını sisteme işliyorsunuz.
+                            <br />
+                            <small class="text-muted">Ekim Tarihi: @Model.EkimTarihi?.ToString("dd.MM.yyyy")</small>
+                        </p>
+                    </div>
+
+                    <form asp-action="HasatYap" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Hasat Tarihi</label>
+                            <input type="date" name="HasatTarihi" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Gerçekleşen Verim (KG)</label>
+                            <div class="input-group input-group-lg">
+                                <input type="number" name="GerceklesenVerimKg" class="form-control fw-bold text-success" placeholder="Örn: 5000" required />
+                                <span class="input-group-text">KG</span>
+                            </div>
+                            <div class="form-text mt-2">
+                                Beklenen Verim: <strong>@Model.BeklenenVerimKg KG</strong>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg fw-bold text-dark">
+                                <i class="fa-solid fa-check me-2"></i>Hasadı Tamamla
+                            </button>
+                            <a asp-action="Index" class="btn btn-light">İptal</a>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

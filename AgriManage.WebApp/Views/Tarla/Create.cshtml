@@ -1,0 +1,64 @@
+﻿@model AgriManage.DataAccess.Models.Tarla
+
+@{
+    ViewData["Title"] = "Yeni Tarla Oluştur";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-secondary text-white py-3 text-center">
+                    <h4 class="mb-0 fw-light">Yeni Tarla Oluştur</h4>
+                </div>
+                <div class="card-body p-5">
+
+                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+
+                    <form asp-action="Create" method="post">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-secondary">Tarla Adı</label>
+                            <input asp-for="Ad" class="form-control form-control-lg" placeholder="Örn: Dere Kenarı - B2" required />
+                            <span asp-validation-for="Ad" class="text-danger small"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-secondary">Tapu Ada / Parsel</label>
+                                <input asp-for="TapuAdaParsel" class="form-control" placeholder="Örn: 105/1" />
+                                <span asp-validation-for="TapuAdaParsel" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-secondary">Alan (Dönüm)</label>
+                                <input asp-for="AlanDonum" type="number" step="0.01" class="form-control" placeholder="Örn: 45" required />
+                                <span asp-validation-for="AlanDonum" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary">Lokasyon</label>
+                            <select asp-for="LokasyonId" class="form-select form-select-lg" asp-items="@(new SelectList(ViewBag.LokasyonListesi, "Id", "Ad"))" required>
+                                <option value="">-- Lokasyon Seçiniz --</option>
+                            </select>
+                            <span asp-validation-for="LokasyonId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg px-5 flex-grow-1">
+                                <i class="fa-solid fa-save me-2"></i>Kaydet
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4">Geri Dön</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

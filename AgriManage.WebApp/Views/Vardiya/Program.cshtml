@@ -1,0 +1,41 @@
+﻿@model IEnumerable<AgriManage.DataAccess.Models.PersonelVardiya>
+@{
+    ViewData["Title"] = "Haftalık Program";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between mb-4">
+        <h3><i class="fa-solid fa-calendar-week me-2"></i>Vardiya Çizelgesi</h3>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Ata" class="btn btn-primary rounded-pill">Vardiya Ata</a>
+        }
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th class="ps-4">Personel</th>
+                    <th>Gün</th>
+                    <th>Vardiya</th>
+                    <th>Saatler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="ps-4">
+                            <span class="text-muted small">#@item.Personel?.SicilNo</span>
+                            <strong>@item.Personel?.ApplicationUser?.TamAd</strong>
+                        </td>
+                        <td>@item.Gun</td>
+                        <td><span class="badge bg-info text-dark">@item.Vardiya?.Ad</span></td>
+                        <td>@item.Vardiya?.BaslangicSaati.ToString(@"hh\:mm") - @item.Vardiya?.BitisSaati.ToString(@"hh\:mm")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

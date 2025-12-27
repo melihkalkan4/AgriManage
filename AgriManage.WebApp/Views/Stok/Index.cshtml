@@ -1,0 +1,80 @@
+﻿@model IEnumerable<AgriManage.DataAccess.Models.StokItem>
+
+@{
+    ViewData["Title"] = "Envanter Listesi";
+}
+
+<div class="container-fluid mt-4">
+    <div class="card shadow border-0">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-secondary"><i class="fa-solid fa-boxes-stacked me-2"></i>Mevcut Envanter</h5>
+            <a asp-action="Create" class="btn btn-primary rounded-pill">
+                <i class="fa-solid fa-plus me-2"></i>Yeni Kart Aç
+            </a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Ürün Adı</th>
+                            <th>Kategori</th>
+                            <th>Depo / Raf</th>
+                            <th>Miktar</th>
+                            <th>Durum</th>
+                            <th class="text-end pe-4">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            // Kritik seviye kontrolü
+                            bool kritikSeviye = item.Miktar <= item.KritikStokSeviyesi;
+
+                            <tr class="@(kritikSeviye ? "table-danger" : "")">
+                                <td class="ps-4 fw-bold">
+                                    @item.Ad
+                                    @if (kritikSeviye)
+                                    {
+                                        <i class="fa-solid fa-triangle-exclamation text-danger ms-2" title="Kritik Stok!"></i>
+                                    }
+                                </td>
+                                <td><span class="badge bg-secondary">@item.StokKategorisi?.Ad</span></td>
+                                <td>
+                                    <div class="fw-bold text-dark">@item.Depo?.Ad</div>
+                                    <small class="text-muted"><i class="fa-solid fa-layer-group me-1"></i>Raf: @(item.RafNo ?? "-")</small>
+                                </td>
+                                <td>
+                                    <span class="fw-bold @(kritikSeviye ? "text-danger" : "text-dark")">
+                                        @item.Miktar.ToString("N2")
+                                    </span>
+                                    <small>@item.Birim</small>
+                                </td>
+                                <td>
+                                    @if (kritikSeviye)
+                                    {
+                                        <span class="badge bg-danger text-white">Stok Azaldı</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success text-white">Yeterli</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group">
+                                        <a asp-action="HareketEkle" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="Giriş/Çıkış Yap">
+                                            <i class="fa-solid fa-right-left"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" title="Düzenle">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

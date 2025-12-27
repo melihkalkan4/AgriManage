@@ -1,0 +1,61 @@
+﻿@model AgriManage.DataAccess.Models.EkimPlani
+
+@{
+    ViewData["Title"] = "Yeni Ekim Başlat";
+}
+
+<div class="container mt-4">
+    <div class="card shadow border-0 col-md-8 mx-auto">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fa-solid fa-seedling me-2"></i>Yeni Ekim Başlat</h5>
+        </div>
+        <div class="card-body">
+
+            <div class="alert alert-success bg-opacity-10 border-success text-success">
+                <i class="fa-solid fa-circle-info me-2"></i>
+                <strong>@ViewBag.TarlaAd</strong> arazisi için üretim kaydı oluşturuyorsunuz.
+            </div>
+
+            <form asp-action="EkimYap" method="post">
+                <input type="hidden" asp-for="TarlaId" />
+                <input type="hidden" asp-for="GerceklesenVerimKg" value="0" />
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Sezon</label>
+                        <select asp-for="SezonId" class="form-select" asp-items="ViewBag.SezonId">
+                            <option value="">-- Sezon Seçiniz --</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Ekilecek Ürün</label>
+                        <select asp-for="UrunId" class="form-select" asp-items="ViewBag.UrunId">
+                            <option value="">-- Ürün Seçiniz --</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Ekim Tarihi</label>
+                        <input asp-for="EkimTarihi" type="date" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Beklenen Verim (KG)</label>
+                        <div class="input-group">
+                            <input asp-for="BeklenenVerimKg" type="number" class="form-control" placeholder="0" />
+                            <span class="input-group-text">kg</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a asp-action="Index" class="btn btn-secondary px-4">İptal</a>
+                    <button type="submit" class="btn btn-success px-4 fw-bold">
+                        <i class="fa-solid fa-check me-2"></i>Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,72 @@
+﻿@model IEnumerable<AgriManage.DataAccess.Models.BakimPlani>
+
+@{
+    ViewData["Title"] = "Bakım Yönetimi";
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-secondary"><i class="fa-solid fa-screwdriver-wrench me-2"></i>Bakım Takvimi</h3>
+            <p class="text-muted mb-0">Planlanan bakım tarihleri ve durumları.</p>
+        </div>
+
+        @if (isAdmin)
+        {
+            <a asp-action="PlanOlustur" class="btn btn-dark rounded-pill shadow-sm">
+                <i class="fa-solid fa-plus me-2"></i>Yeni Bakım Planı
+            </a>
+        }
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Ekipman</th>
+                        <th>Bakım Tipi</th>
+                        <th>Planlanan Tarih</th>
+                        <th>Durum</th>
+                        <th class="text-end">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr><td colspan="5" class="text-center py-4 text-muted">Henüz bakım planı yok.</td></tr>
+                    }
+                    @foreach (var item in Model)
+                    {
+                        // MANTIK DEĞİŞTİ: Bugünün tarihi, planlanan tarihi geçti mi?
+                        bool bakimGeldi = DateTime.Now >= item.PlanlananTarih;
+                        string durumClass = bakimGeldi ? "text-danger fw-bold" : "text-success";
+
+                        <tr>
+                            <td class="fw-bold">@(item.Ekipman?.Ad ?? "-")</td>
+                            <td><span class="badge bg-info text-dark">@(item.BakimTipi?.Ad ?? "-")</span></td>
+
+                            <td>@item.PlanlananTarih.ToString("dd.MM.yyyy")</td>
+
+                            <td class="@durumClass">
+                                @if (bakimGeldi)
+                                {
+                                    <span><i class="fa-solid fa-triangle-exclamation"></i> Bakım Zamanı Geldi!</span>
+                                }
+                                else
+                                {
+
+                                    <span><i class="fa-solid fa-clock"></i> Zamanı Var</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="BakimYap" asp-route-planId="@item.Id" class="btn btn-sm btn-outline-primary">Bakımı İşle</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

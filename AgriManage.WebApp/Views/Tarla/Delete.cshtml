@@ -1,0 +1,57 @@
+﻿@model AgriManage.DataAccess.Models.Tarla
+
+<div class="card shadow border-0 mt-4">
+    <div class="card-header bg-danger bg-gradient ml-0 py-3">
+        <div class="row">
+            <div class="col-12 text-center">
+                <h2 class="text-white py-2">Tarlayı Silmek İstediğinize Emin misiniz?</h2>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        <form method="post">
+            @* Silinecek ID'yi gizli olarak tutuyoruz *@
+            <input asp-for="Id" hidden />
+
+            <div class="border p-3">
+
+                @* Tarla Adı (Kilitli - disabled) *@
+                <div class="form-floating py-2 col-12">
+                    <input asp-for="Ad" disabled class="form-control border-0 shadow" />
+                    <label asp-for="Ad" class="ms-2">Tarla Adı</label>
+                </div>
+
+                @* Tapu Bilgisi (Kilitli) *@
+                <div class="form-floating py-2 col-12">
+                    <input asp-for="TapuAdaParsel" disabled class="form-control border-0 shadow" />
+                    <label asp-for="TapuAdaParsel" class="ms-2">Tapu Ada / Parsel</label>
+                </div>
+
+                @* Alan (Kilitli) *@
+                <div class="form-floating py-2 col-12">
+                    <input asp-for="AlanDonum" disabled class="form-control border-0 shadow" />
+                    <label asp-for="AlanDonum" class="ms-2">Alan (Dönüm)</label>
+                </div>
+
+                @* Uyarı Mesajı *@
+                <div class="alert alert-warning mt-3" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    Dikkat: Bu işlem geri alınamaz! Bu tarlayı sildiğinizde, tarlaya bağlı planlar da etkilenebilir.
+                </div>
+
+                <div class="row pt-2">
+                    <div class="col-6 col-md-3">
+                        @* Buton tipi submit olmalı ki DeletePOST çalışsın *@
+                        <button type="submit" class="btn btn-danger form-control">
+                            <i class="bi bi-trash-fill"></i> Evet, Sil
+                        </button>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a asp-controller="Tarla" asp-action="Index" class="btn btn-outline-secondary form-control">İptal</a>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>

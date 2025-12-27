@@ -1,0 +1,222 @@
+﻿@model AgriManage.DataAccess.Models.AnalizViewModel
+
+@{
+    ViewData["Title"] = "Tarla Yönetimi";
+}
+
+<div class="container mt-4">
+
+    @if (TempData["basarili"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm">
+            <i class="fa-solid fa-check-circle me-2"></i> @TempData["basarili"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["hata"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["hata"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-success mb-0"><i class="fa-solid fa-wheat-awn me-2"></i>Tarlalarım</h3>
+            <p class="text-muted small mb-0">Üretim sahalarınızı ve operasyonlarınızı yönetin.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-success shadow-sm rounded-pill px-4">
+            <i class="fa-solid fa-plus me-2"></i> Yeni Tarla
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-5">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Tarla Adı</th>
+                        <th>Konum</th>
+                        <th>Alan</th>
+                        <th>Anlık Durum</th>
+                        <th class="text-end pe-3">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Tarlalar == null || !Model.Tarlalar.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-tractor fa-2x mb-2 opacity-50"></i><br />
+                                Kayıtlı tarla bulunamadı.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.Tarlalar)
+                        {
+                            // --- KRİTİK DÜZELTME ---
+                            // Sadece son kayda bakmak yerine, "Hasat edilmemiş" aktif bir plan var mı ona bakıyoruz.
+                            var aktifPlan = item.EkimPlanlari?.FirstOrDefault(x => x.HasatTarihi == null);
+                            bool ekili = aktifPlan != null;
+
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="fw-bold text-dark">@item.Ad</div>
+                                    <small class="text-muted">@item.TapuAdaParsel</small>
+                                </td>
+                                <td>
+                                    <i class="fa-solid fa-location-dot text-danger me-1"></i> @(item.Lokasyon?.Ad ?? "-")
+                                </td>
+                                <td class="fw-bold">@item.AlanDonum <small class="fw-normal text-muted">dk</small></td>
+                                <td>
+                                    @if (ekili)
+                                    {
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success">
+                                            <i class="fa-solid fa-seedling me-1"></i> @aktifPlan.Urun?.Ad
+                                        </span>
+                                        <div class="small text-muted mt-1" style="font-size: 0.75rem;">
+                                            Ekim: @aktifPlan.EkimTarihi?.ToString("dd.MM.yyyy")
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border">
+                                            <i class="fa-regular fa-circle me-1"></i> Boş / Nadas
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-end pe-3">
+                                    <div class="btn-group shadow-sm">
+                                        @if (ekili)
+                                        {
+                                            <a asp-action="HasatYap" asp-route-id="@item.Id" class="btn btn-sm btn-warning text-dark" title="Hasat Et">
+                                                <i class="fa-solid fa-sickle"></i>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-action="EkimYap" asp-route-id="@item.Id" class="btn btn-sm btn-outline-success" title="Ekim Yap">
+                                                <i class="fa-solid fa-seedling"></i>
+                                            </a>
+                                        }
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="Düzenle"><i class="fa-solid fa-pen"></i></a>
+                                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Sil"><i class="fa-solid fa-trash"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @if (Model.AktifEkimler != null && Model.AktifEkimler.Any())
+    {
+        <div class="row g-4 mb-5">
+            <div class="col-lg-8">
+                <div class="card shadow border-0 h-100">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <h6 class="mb-0 fw-bold text-success"><i class="fa-solid fa-list-check me-2"></i>Aktif Üretim Listesi</h6>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr><th class="ps-3">Tarla</th><th>Ürün</th><th>Beklenen Verim</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var plan in Model.AktifEkimler.Take(5))
+                                {
+                                    <tr>
+                                        <td class="ps-3 fw-bold">@plan.Tarla?.Ad</td>
+                                        <td><span class="badge bg-warning text-dark">@plan.Urun?.Ad</span></td>
+                                        <td>@plan.BeklenenVerimKg.ToString("N0") Kg</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow border-0 h-100">
+                    <div class="card-body">
+                        <h6 class="fw-bold text-dark mb-3">⚡ Hızlı İşlemler</h6>
+                        <div class="d-grid gap-2">
+                            <a asp-controller="Stok" asp-action="HizliKullanim" class="btn btn-outline-primary text-start">
+                                <i class="fa-solid fa-flask me-2"></i> Gübre/İlaç Kullanımı
+                            </a>
+                            <a asp-controller="Gorev" asp-action="Create" class="btn btn-outline-warning text-dark text-start">
+                                <i class="fa-solid fa-clipboard-check me-2"></i> İş Emri Oluştur
+                            </a>
+                            <a asp-controller="Home" asp-action="Analiz" class="btn btn-light text-start">
+                                <i class="fa-solid fa-chart-pie me-2"></i> Detaylı Raporlar
+                            </a>
+                        </div>
+
+                        <div class="mt-4 p-3 bg-success bg-opacity-10 rounded text-center border border-success border-opacity-25">
+                            <small class="text-success fw-bold d-block text-uppercase ls-1">Toplam Beklenen Hasat</small>
+                            <h3 class="fw-bold text-success mb-0">
+                                @Model.AktifEkimler.Sum(x => x.BeklenenVerimKg).ToString("N0") <small class="fs-6">KG</small>
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (Model.GecmisEkimler != null && Model.GecmisEkimler.Any())
+    {
+        <div class="card shadow border-0 mb-4">
+            <div class="card-header bg-secondary text-white py-3">
+                <h6 class="mb-0 fw-bold"><i class="fa-solid fa-clock-rotate-left me-2"></i>Hasat Geçmişi</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-3">Tarla</th>
+                            <th>Ürün</th>
+                            <th>Sezon</th>
+                            <th>Hasat Tarihi</th>
+                            <th>Tahmin (Kg)</th>
+                            <th>Gerçekleşen (Kg)</th>
+                            <th>Fark</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.GecmisEkimler.Take(10))
+                        {
+                            var fark = item.GerceklesenVerimKg - item.BeklenenVerimKg;
+                            var renk = fark >= 0 ? "text-success" : "text-danger";
+                            var ikon = fark >= 0 ? "fa-arrow-up" : "fa-arrow-down";
+
+                            <tr>
+                                <td class="ps-3 fw-bold">@item.Tarla?.Ad</td>
+                                <td>@item.Urun?.Ad</td>
+                                <td><span class="badge bg-light text-dark border">@item.Sezon?.Ad</span></td>
+                                <td>@item.HasatTarihi?.ToString("dd.MM.yyyy")</td>
+                                <td class="text-muted">@item.BeklenenVerimKg.ToString("N0")</td>
+                                <td class="fw-bold">@item.GerceklesenVerimKg.ToString("N0")</td>
+                                <td class="@renk fw-bold">
+                                    <i class="fa-solid @ikon me-1"></i> @Math.Abs(fark).ToString("N0")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (Model.GecmisEkimler.Count > 10)
+            {
+                <div class="card-footer bg-white text-center">
+                    <small class="text-muted">Son 10 hasat gösteriliyor.</small>
+                </div>
+            }
+        </div>
+    }
+</div>

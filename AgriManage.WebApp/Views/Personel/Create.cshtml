@@ -1,0 +1,42 @@
+﻿@model AgriManage.DataAccess.Models.Personel
+
+@{
+    ViewData["Title"] = "Yeni Personel Ekle";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fa-solid fa-user-plus"></i> Yeni Personel Kaydı</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Sicil No / Ad Soyad</label>
+                            <input asp-for="SicilNo" class="form-control" placeholder="Örn: Ahmet Yılmaz (P-055)" />
+                            <span asp-validation-for="SicilNo" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Pozisyon / Görev</label>
+                            <select asp-for="PozisyonId" class="form-control" asp-items="ViewBag.PozisyonId"></select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">İşe Başlama Tarihi</label>
+                            <input asp-for="IseBaslamaTarihi" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-success">Personeli Kaydet</button>
+                            <a asp-action="Index" class="btn btn-outline-secondary mt-2">İptal</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

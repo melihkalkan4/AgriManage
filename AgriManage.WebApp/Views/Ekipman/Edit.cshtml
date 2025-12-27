@@ -1,0 +1,60 @@
+﻿@model AgriManage.DataAccess.Models.Ekipman
+
+@{
+    ViewData["Title"] = "Ekipman Düzenle";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="fa-solid fa-pen-to-square"></i> Ekipman Düzenle</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit">
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Ekipman Adı</label>
+                                <input asp-for="Ad" class="form-control" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Seri No</label>
+                                <input asp-for="SeriNo" class="form-control" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Marka</label>
+                                <input asp-for="Marka" class="form-control" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Model</label>
+                                <input asp-for="Model" class="form-control" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Kategori</label>
+                                <select asp-for="EkipmanKategorisiId" class="form-control" asp-items="ViewBag.EkipmanKategorisiId"></select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Durum</label>
+                                <select asp-for="EkipmanDurumuId" class="form-control" asp-items="ViewBag.EkipmanDurumuId"></select>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning">Güncelle</button>
+                            <a asp-action="Index" class="btn btn-secondary">İptal</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>  

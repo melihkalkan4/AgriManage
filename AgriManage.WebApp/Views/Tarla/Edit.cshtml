@@ -1,0 +1,72 @@
+﻿@model AgriManage.DataAccess.Models.Tarla
+
+@{
+    ViewData["Title"] = "Tarla Düzenle";
+}
+
+<div class="container mt-4">
+    <div class="card shadow border-0 col-md-8 mx-auto">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fa-solid fa-pen-to-square me-2"></i>Tarla Bilgilerini Düzenle</h5>
+        </div>
+        <div class="card-body">
+
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="ApplicationUserId" />
+
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Ad" class="form-label fw-bold">Tarla Adı</label>
+                        <input asp-for="Ad" class="form-control" placeholder="Örn: Kuzey Buğday Tarlası" />
+                        <span asp-validation-for="Ad" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="LokasyonId" class="form-label fw-bold">Konum / Bölge</label>
+                        <select asp-for="LokasyonId" class="form-select" asp-items="@(new SelectList(ViewBag.LokasyonListesi, "Id", "Ad"))">
+                            <option value="">-- Konum Seçiniz --</option>
+                        </select>
+                        <span asp-validation-for="LokasyonId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="TapuAdaParsel" class="form-label fw-bold">Tapu Bilgisi (Ada/Parsel)</label>
+                        <input asp-for="TapuAdaParsel" class="form-control" placeholder="Örn: 101/5" />
+                        <span asp-validation-for="TapuAdaParsel" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="AlanDonum" class="form-label fw-bold">Arazi Büyüklüğü</label>
+                        <div class="input-group">
+                            <input asp-for="AlanDonum" type="number" step="0.01" class="form-control" />
+                            <span class="input-group-text">Dönüm</span>
+                        </div>
+                        <span asp-validation-for="AlanDonum" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-bold">Arazi Tipi</label>
+                        <select class="form-select" disabled>
+                            <option>Sulak Tarım Arazisi</option>
+                        </select>
+                        <small class="text-muted">Bu alan değiştirilemez.</small>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a asp-action="Index" class="btn btn-secondary px-4">İptal</a>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">
+                        <i class="fa-solid fa-save me-2"></i>Değişiklikleri Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

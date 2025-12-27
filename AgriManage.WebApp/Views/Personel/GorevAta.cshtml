@@ -1,0 +1,56 @@
+﻿@model AgriManage.DataAccess.Models.Gorev
+
+@{
+    ViewData["Title"] = "Hızlı Görev Atama";
+}
+
+<div class="container mt-4">
+    <div class="card shadow border-0">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fa-solid fa-list-check me-2"></i>Personele İş Emri Ver</h5>
+        </div>
+        <div class="card-body bg-light">
+            <form asp-action="GorevAta">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Personel (Sicil No)</label>
+                        <select asp-for="PersonelId" class="form-select" asp-items="ViewBag.PersonelId">
+                            <option value="">-- Personel Seçiniz --</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">İlgili Tarla</label>
+                        <select asp-for="TarlaId" class="form-select" asp-items="ViewBag.TarlaId">
+                            <option value="">-- Tarla Seçiniz (Opsiyonel) --</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <label asp-for="Baslik" class="form-label fw-bold">Görev Başlığı</label>
+                        <input asp-for="Baslik" class="form-control" placeholder="Örn: Gübreleme İşlemi" />
+                        <span asp-validation-for="Baslik" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <label asp-for="Aciklama" class="form-label">Açıklama</label>
+                        <textarea asp-for="Aciklama" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="PlanlananBaslangic" class="form-label fw-bold">Başlangıç Tarihi</label>
+                        <input asp-for="PlanlananBaslangic" type="date" class="form-control" />
+                    </div>
+                </div>
+
+                <hr />
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-secondary">İptal</a>
+                    <button type="submit" class="btn btn-success px-4">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

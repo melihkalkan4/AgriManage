@@ -1,0 +1,58 @@
+﻿@model IEnumerable<AgriManage.DataAccess.Models.Ekipman>
+
+@{
+    ViewData["Title"] = "Ekipman Listesi";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>🚜 Ekipman Envanteri</h2>
+        <a asp-action="Create" class="btn btn-success"><i class="fa-solid fa-plus"></i> Yeni Ekipman Ekle</a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="bg-secondary text-white">
+                    <tr>
+                        <th>Ekipman Adı</th>
+                        <th>Marka / Model</th>
+                        <th>Seri No</th>
+                        <th>Kategori</th>
+                        <th>Durum</th>
+                        <th class="text-end">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold">@item.Ad</td>
+                            <td>@item.Marka - @item.Model</td>
+                            <td><span class="badge bg-light text-dark border">@item.SeriNo</span></td>
+                            <td>@item.EkipmanKategorisi?.Ad</td>
+                            <td>
+                                @if (item.EkipmanDurumu?.Ad == "Aktif")
+                                {
+                                    <span class="badge bg-success">Aktif</span>
+                                }
+                                else if (item.EkipmanDurumu?.Ad == "Arızalı")
+                                {
+                                    <span class="badge bg-danger">Arızalı</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">@item.EkipmanDurumu?.Ad</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i> Düzenle</a>
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i> Sil</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

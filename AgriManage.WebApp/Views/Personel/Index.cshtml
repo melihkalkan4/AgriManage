@@ -1,0 +1,64 @@
+﻿@model IEnumerable<AgriManage.DataAccess.Models.Personel>
+
+@{
+    ViewData["Title"] = "Personel Yönetimi";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>👷 Personel Kadrosu</h2>
+        <div>
+            <a asp-action="GorevAta" class="btn btn-warning text-dark me-2">
+                <i class="fa-solid fa-clipboard-check"></i> İş Emri Oluştur
+            </a>
+            <a asp-action="Create" class="btn btn-success">
+                <i class="fa-solid fa-user-plus"></i> Yeni Personel
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="bg-dark text-white">
+                    <tr>
+                        <th>Sicil No</th>
+                        <th>Departman</th>
+                        <th>Pozisyon</th>
+                        <th>İşe Başlama</th>
+                        <th>Aktif Görevler</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold">@item.SicilNo</td>
+                            <td>
+                                <span class="badge bg-secondary">@item.Pozisyon?.Departman?.Ad</span>
+                            </td>
+                            <td>@item.Pozisyon?.Ad</td>
+                            <td>@item.IseBaslamaTarihi.ToShortDateString()</td>
+                            <td>
+                                @if (item.AtananGorevler != null && item.AtananGorevler.Any(g => g.GorevDurumuId != 3))
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        @item.AtananGorevler.Count(g => g.GorevDurumuId != 3) Görev
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">Müsait</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary">Düzenle</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

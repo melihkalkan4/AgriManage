@@ -1,0 +1,32 @@
+﻿@model AgriManage.DataAccess.Models.BakimPlani
+
+@{
+    ViewData["Title"] = "Yeni Bakım Planı";
+}
+
+<div class="container mt-4">
+    <div class="card shadow border-0 col-md-8 mx-auto">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Periyodik Bakım Planla (Tarih Bazlı)</h5>
+        </div>
+        <div class="card-body">
+            <form asp-action="PlanOlustur">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Ekipman Seçimi</label>
+                    <select asp-for="EkipmanId" class="form-select" asp-items="ViewBag.EkipmanId"></select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Bakım Tipi</label>
+                    <select asp-for="BakimTipiId" class="form-select" asp-items="ViewBag.BakimTipiId"></select>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="PlanlananTarih" class="form-label fw-bold">Planlanan Bakım Tarihi</label>
+                    <input asp-for="PlanlananTarih" type="date" class="form-control" />
+                </div>
+
+                <button type="submit" class="btn btn-dark w-100">Planı Kaydet</button>
+            </form>
+        </div>
+    </div>
+</div>
