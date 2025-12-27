@@ -40,7 +40,7 @@
                         <th>Konum</th>
                         <th>Alan</th>
                         <th>Anlık Durum</th>
-                        <th class="text-end pe-3">İşlemler</th>
+                        <th class="text-center">İşlemler</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -57,8 +57,7 @@
                     {
                         @foreach (var item in Model.Tarlalar)
                         {
-                            // --- KRİTİK DÜZELTME ---
-                            // Sadece son kayda bakmak yerine, "Hasat edilmemiş" aktif bir plan var mı ona bakıyoruz.
+                            // Ekim durumu kontrolü
                             var aktifPlan = item.EkimPlanlari?.FirstOrDefault(x => x.HasatTarihi == null);
                             bool ekili = aktifPlan != null;
 
@@ -88,7 +87,7 @@
                                         </span>
                                     }
                                 </td>
-                                <td class="text-end pe-3">
+                                <td class="text-center">
                                     <div class="btn-group shadow-sm">
                                         @if (ekili)
                                         {
@@ -102,6 +101,13 @@
                                                 <i class="fa-solid fa-seedling"></i>
                                             </a>
                                         }
+
+                                        <a asp-controller="Envanter" asp-action="Index" asp-route-tarlaId="@item.Id"
+                                           class="btn btn-sm btn-info text-white"
+                                           title="Envanter (Mikroservis)">
+                                            <i class="fa-solid fa-box-open"></i>
+                                        </a>
+
                                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="Düzenle"><i class="fa-solid fa-pen"></i></a>
                                         <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Sil"><i class="fa-solid fa-trash"></i></a>
                                     </div>

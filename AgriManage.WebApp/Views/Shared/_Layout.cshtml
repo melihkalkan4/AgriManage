@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="~/AgriManage.styles.css" asp-append-version="true" />
 
     <style>
-          @@media all and (min-width: 992px) {
+        @@media all and (min-width: 992px) {
             .navbar .nav-item:hover > .dropdown-menu
 
         {
@@ -138,14 +138,14 @@
                                         </a>
                                         <ul class="dropdown-menu">
                                             <li>
-                                                <a class="dropdown-item fw-bold" asp-controller="Envanter" asp-action="Index">
-                                                    <i class="fa-solid fa-microchip text-primary me-2"></i> Envanter (Mikroservis)
+                                                <a class="dropdown-item fw-bold" asp-controller="Envanter" asp-action="Index" asp-route-tarlaId="0">
+                                                    <i class="fa-solid fa-warehouse text-success me-2"></i> Merkez Depo & Satın Alma
                                                 </a>
                                             </li>
 
                                             <li><hr class="dropdown-divider"></li>
 
-                                            <li><a class="dropdown-item" asp-controller="Stok" asp-action="Dashboard">Stok Analizi</a></li>
+                                            <li><a class="dropdown-item" asp-controller="Stok" asp-action="Dashboard"><i class="fa-solid fa-chart-pie me-2"></i>Stok Analizi</a></li>
                                         </ul>
                                     </li>
 

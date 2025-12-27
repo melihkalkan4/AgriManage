@@ -1,0 +1,53 @@
+﻿@model AgriManage.WebApp.DTOs.UrunDto
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0"><i class="fa-solid fa-plus-circle me-2"></i>Yeni Envanter Girişi</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-controller="Envanter" asp-action="Create" method="post">
+
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <input type="hidden" name="TarlaId" value="@(ViewBag.TarlaId ?? 0)" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Ürün / Ekipman Adı</label>
+                            <input asp-for="Name" class="form-control" placeholder="Örn: 20-20 Gübre..." />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Miktar / Stok</label>
+                            <input asp-for="StockQuantity" type="number" class="form-control" placeholder="0" />
+                            <div class="form-text">Adet, Kilogram veya Litre cinsinden giriniz.</div>
+                            <span asp-validation-for="StockQuantity" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Birim Fiyat (TL)</label>
+                            <input asp-for="Price" type="number" step="any" class="form-control" placeholder="0.00" />
+                            <span asp-validation-for="Price" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success text-white fw-bold">
+                                <i class="fa-solid fa-save me-2"></i> Kaydet
+                            </button>
+                            <a asp-action="Index" asp-route-tarlaId="@(ViewBag.TarlaId ?? 0)" class="btn btn-light border">İptal</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

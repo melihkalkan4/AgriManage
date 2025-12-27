@@ -2,60 +2,243 @@
 
 @{
     ViewData["Title"] = "Envanter Yönetimi";
+
+    // ViewBag null gelirse 0 (Merkez Depo) kabul et
+    int tarlaId = 0;
+    if (ViewBag.SeciliTarlaId != null)
+    {
+        tarlaId = (int)ViewBag.SeciliTarlaId;
+    }
+
+    // TarlaId 0 ise burası Merkez Depodur
+    bool merkezDepoMu = (tarlaId == 0);
 }
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>🚜 Envanter Listesi (Mikroservis)</h2>
-        <a href="#" class="btn btn-primary">+ Yeni Ürün Ekle</a>
-    </div>
-
-    <table class="table table-hover table-bordered shadow-sm">
-        <thead class="table-dark">
-            <tr>
-                <th>#</th>
-                <th>Ürün Adı</th>
-                <th>Stok Adedi</th>
-                <th>Birim Fiyat</th>
-                <th>Sahibi</th>
-                <th>İşlemler</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (Model != null && Model.Any())
-            {
-                foreach (var urun in Model)
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-primary">
+                @if (merkezDepoMu)
                 {
-                    <tr>
-                        <td>@urun.Id</td>
-                        <td class="fw-bold">@urun.Name</td>
-                        <td>
-                            @if (urun.StockQuantity < 10)
-                            {
-                                <span class="badge bg-danger">Kritik: @urun.StockQuantity</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-success">@urun.StockQuantity adet</span>
-                            }
-                        </td>
-                        <td>@urun.Price.ToString("C2")</td>
-                        <td>@urun.OwnerId</td>
-                        <td>
-                            <button class="btn btn-sm btn-warning">Düzenle</button>
-                            <button class="btn btn-sm btn-danger">Sil</button>
-                        </td>
-                    </tr>
+                    <i class="fa-solid fa-warehouse me-2"></i>
+                
+                    <span>Merkez Depo Yönetimi</span>
                 }
+                else
+                {
+                    <i class="fa-solid fa-wheat-awn me-2"></i>
+                
+                    <span>Tarla Envanteri</span>
+                }
+            </h2>
+            <p class="text-muted">
+                @(merkezDepoMu ? "Şirketin tüm stok girişi ve satın alma işlemleri buradan yapılır." : "Bu tarlaya zimmetlenmiş ekipman ve ürünler.")
+            </p>
+        </div>
+
+        <div>
+            @if (merkezDepoMu)
+            {
+                // SENARYO 1: MERKEZ DEPO (Yeni Mal Girşi)
+                <a asp-action="Create" asp-route-tarlaId="0" class="btn btn-success shadow">
+                    <i class="fa-solid fa-cart-plus me-2"></i> Yeni Stok Girişi (Satın Alma)
+                </a>
             }
             else
             {
-                <tr>
-                    <td colspan="6" class="text-center text-muted">
-                        Henüz hiç ürün eklenmemiş veya servise ulaşılamıyor.
-                    </td>
-                </tr>
+                // SENARYO 2: TARLA (Depodan Atama)
+                <button class="btn btn-warning shadow text-dark fw-bold" onclick="modalAc()">
+                    <i class="fa-solid fa-dolly me-2"></i> Depodan Malzeme Getir
+                </button>
             }
-        </tbody>
-    </table>
+        </div>
+    </div>
+
+    @if (ViewBag.Hata != null)
+    {
+        <div class="alert alert-danger shadow-sm">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> @ViewBag.Hata
+        </div>
+    }
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Ürün Adı</th>
+                            <th>Stok</th>
+                            <th>Birim Fiyat</th>
+                            <th>Toplam Değer</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-bold text-dark">@item.Name</td>
+                                    <td>
+                                        <span class="badge bg-info text-dark border border-info bg-opacity-25">
+                                            @item.StockQuantity Adet/Kg
+                                        </span>
+                                    </td>
+                                    <td>@item.Price.ToString("C2")</td>
+                                    <td class="fw-bold text-success">
+                                        @((item.StockQuantity * item.Price).ToString("C2"))
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    <i class="fa-solid fa-box-open fa-3x mb-3 opacity-25"></i><br />
+                                    @if (merkezDepoMu)
+                                    {
+                                        <span class="fs-5">Depoda henüz ürün yok.</span>
+                                
+                                        <br />
+                                        <small>"Yeni Stok Girişi" butonunu kullanarak ürün ekleyin.</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="fs-5">Bu tarlaya atanmış ürün yok.</span>
+                                
+                                        <br />
+                                        <small>Merkez depodan transfer yaparak ekipman getirebilirsiniz.</small>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        @if (!merkezDepoMu)
+        {
+            <a asp-controller="Tarla" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-arrow-left me-1"></i> Tarlalara Dön
+            </a>
+        }
+        else
+        {
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="fa-solid fa-house me-1"></i> Ana Sayfaya Dön
+            </a>
+        }
+    </div>
 </div>
+
+@if (!merkezDepoMu)
+{
+    <div class="modal fade" id="transferModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title text-dark fw-bold">
+                        <i class="fa-solid fa-dolly me-2"></i>Merkez Depodan Transfer
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-light border mb-3">
+                        <i class="fa-solid fa-circle-info text-info me-2"></i>
+                        Merkez depoda (boşta) duran ürünleri bu tarlaya zimmetleyebilirsiniz.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Depodaki Ürün Seçimi:</label>
+                        <select id="depoUrunSelect" class="form-select form-select-lg">
+                            <option value="">Yükleniyor...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-warning fw-bold text-dark px-4" onclick="transferiTamamla()">
+                        <i class="fa-solid fa-check me-2"></i> Transfer Et
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modalı açar ve verileri yükler
+        function modalAc() {
+            // 1. Modalı Göster
+            var myModal = new bootstrap.Modal(document.getElementById('transferModal'));
+            myModal.show();
+
+            // 2. Depodaki Ürünleri Çek (API)
+            fetch('/Envanter/GetDepoUrunleri')
+                .then(response => {
+                    if (!response.ok) throw new Error("API Hatası");
+                    return response.json();
+                })
+                .then(data => {
+                    var select = document.getElementById('depoUrunSelect');
+                    select.innerHTML = '<option value="">-- Bir Ürün Seçiniz --</option>';
+
+                    if (data.length === 0) {
+                        select.innerHTML = '<option value="" disabled>Depoda boşta ürün yok!</option>';
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        // Fiyatı formatla
+                        let fiyat = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(item.price);
+                        select.innerHTML += `<option value="${item.id}">${item.name} (Stok: ${item.stockQuantity}) - ${fiyat}</option>`;
+                    });
+                })
+                .catch(err => {
+                    console.error('Hata:', err);
+                    document.getElementById('depoUrunSelect').innerHTML = '<option>Veri çekilemedi!</option>';
+                });
+        }
+
+        // Seçilen ürünü tarlaya atar
+        function transferiTamamla() {
+            var urunId = document.getElementById('depoUrunSelect').value;
+            var hedefTarlaId = '@tarlaId'; // Razor'dan gelen değer
+
+            if (!urunId) {
+                alert("Lütfen listeden bir ürün seçin!");
+                return;
+            }
+
+            // Butonu kilitle (çift tıklamayı önle)
+            var btn = document.querySelector("button[onclick='transferiTamamla()']");
+            var eskiHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> İşleniyor...';
+
+            // 3. Transfer İsteği At (API)
+            fetch(`/Envanter/UrunTransferEt?urunId=${urunId}&hedefTarlaId=${hedefTarlaId}`, {
+                method: 'POST'
+            })
+            .then(res => {
+                if (res.ok) {
+                    // Başarılı
+                    location.reload();
+                } else {
+                    alert("Transfer sırasında hata oluştu. Lütfen tekrar deneyin.");
+                    btn.disabled = false;
+                    btn.innerHTML = eskiHtml;
+                }
+            })
+            .catch(err => {
+                 alert("Sunucu hatası!");
+                 btn.disabled = false;
+                 btn.innerHTML = eskiHtml;
+            });
+        }
+    </script>
+}

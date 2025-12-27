@@ -1,50 +1,77 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using AgriManage.Service.Inventory.Data;
 using AgriManage.Service.Inventory.Models;
-using System.Linq;
 using Microsoft.AspNetCore.Authorization;
+using System.Linq;
+using System.Security.Claims;
 
 namespace AgriManage.Service.Inventory.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // <--- 2. İŞTE KİLİT BURASI!
+    [Authorize]
     public class ProductsController : ControllerBase
     {
         private readonly InventoryDbContext _context;
 
-        // Dependency Injection: Veritabanı bağlantısını içeri alıyoruz
         public ProductsController(InventoryDbContext context)
         {
             _context = context;
         }
 
-        // TÜM ÜRÜNLERİ GETİR
-        // GET: api/products
+        // 1. LİSTELEME (Mevcut Mantık)
         [HttpGet]
-        public IActionResult GetAll()
+        public IActionResult GetAll([FromQuery] int? tarlaId)
         {
-            var products = _context.Products.ToList();
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            // Eğer TarlaId 0 veya null ise -> Depodaki (Boşta) ürünleri getir
+            if (tarlaId == 0 || tarlaId == null)
+            {
+                // TarlaId'si 0 olanlar "Depo"da demektir.
+                return Ok(_context.Products.Where(p => p.TarlaId == 0).ToList());
+            }
+
+            // Belirli bir tarlanın ürünleri
+            var products = _context.Products.Where(p => p.TarlaId == tarlaId.Value).ToList();
             return Ok(products);
         }
 
-        // YENİ ÜRÜN EKLE (Veritabanını doldurmak için gerekli)
-        // POST: api/products
+        // 2. YENİ ÜRÜN EKLEME (Sorunu Çözen Kısım)
+        // Artık OwnerId'yi Token'dan alıyoruz ve TarlaId zorunlu değil (0 olabilir)
         [HttpPost]
         public IActionResult Create(Product product)
         {
+            // A) TOKEN'DAN ID ÇEKME 🕵️‍♂️
+            // TokenService'in içine koyduğumuz ID'yi buradan okuyoruz.
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                         ?? User.FindFirst("UserId")?.Value;
+
+            // Eğer bir şekilde ID bulunamazsa "Bilinmeyen" yazsın ama patlamasın.
+            product.OwnerId = userId ?? "System_Unknown";
+
+            // B) DEPOYA EKLEME MANTIĞI
+            // Eğer TarlaId gelmediyse 0 (Depo) kabul et.
+            if (product.TarlaId < 0) product.TarlaId = 0;
+
             _context.Products.Add(product);
-            _context.SaveChanges(); // SQL'e kaydet
+            _context.SaveChanges();
             return Ok(product);
         }
 
-        // KULLANICIYA AİT ÜRÜNLERİ GETİR
-        // GET: api/products/user/{userId}
-        [HttpGet("user/{userId}")]
-        public IActionResult GetByUserId(string userId)
+        // 3. YENİ ÖZELLİK: ÜRÜN TRANSFERİ (Zimmetleme) 🚚
+        // Bir ürünü alıp başka bir tarlaya atar (Depodan Tarlaya veya Tarladan Tarlaya)
+        [HttpPut("assign")]
+        public IActionResult AssignProduct([FromQuery] int productId, [FromQuery] int targetTarlaId)
         {
-            var userProducts = _context.Products.Where(p => p.OwnerId == userId).ToList();
-            return Ok(userProducts);
+            var product = _context.Products.Find(productId);
+            if (product == null) return NotFound("Ürün bulunamadı.");
+
+            // Ürünün konumunu değiştiriyoruz
+            product.TarlaId = targetTarlaId;
+
+            _context.SaveChanges();
+            return Ok(new { message = "Transfer başarılı", product });
         }
     }
 }
