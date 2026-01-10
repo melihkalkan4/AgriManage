@@ -5,60 +5,119 @@
 }
 
 <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>👷 Personel Kadrosu</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <a asp-action="GorevAta" class="btn btn-warning text-dark me-2">
-                <i class="fa-solid fa-clipboard-check"></i> İş Emri Oluştur
+            <h2 class="mb-0 fw-bold text-dark"><i class="fa-solid fa-users-gear me-2 text-primary"></i>Personel Kadrosu</h2>
+            <p class="text-muted mb-0">İşletmedeki tüm çalışanların listesi, yetkileri ve görev durumları</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="GorevAta" class="btn btn-warning shadow-sm text-dark fw-bold">
+                <i class="fa-solid fa-clipboard-check me-1"></i> İş Emri Oluştur
             </a>
-            <a asp-action="Create" class="btn btn-success">
-                <i class="fa-solid fa-user-plus"></i> Yeni Personel
+            <a asp-action="Create" class="btn btn-success shadow-sm fw-bold">
+                <i class="fa-solid fa-user-plus me-1"></i> Yeni Personel Tanımla
             </a>
         </div>
     </div>
 
-    <div class="card shadow">
+    <div class="card shadow border-0">
         <div class="card-body p-0">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="bg-dark text-white">
-                    <tr>
-                        <th>Sicil No</th>
-                        <th>Departman</th>
-                        <th>Pozisyon</th>
-                        <th>İşe Başlama</th>
-                        <th>Aktif Görevler</th>
-                        <th>İşlemler</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model)
-                    {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="bg-light text-secondary">
                         <tr>
-                            <td class="fw-bold">@item.SicilNo</td>
-                            <td>
-                                <span class="badge bg-secondary">@item.Pozisyon?.Departman?.Ad</span>
-                            </td>
-                            <td>@item.Pozisyon?.Ad</td>
-                            <td>@item.IseBaslamaTarihi.ToShortDateString()</td>
-                            <td>
-                                @if (item.AtananGorevler != null && item.AtananGorevler.Any(g => g.GorevDurumuId != 3))
-                                {
-                                    <span class="badge bg-warning text-dark">
-                                        @item.AtananGorevler.Count(g => g.GorevDurumuId != 3) Görev
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-success">Müsait</span>
-                                }
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary">Düzenle</button>
-                            </td>
+                            <th class="ps-4 py-3">Personel Bilgisi</th>
+                            <th>Pozisyon / Ünvan</th>
+                            <th>Sicil No</th>
+                            <th>İşe Başlama</th>
+                            <th>Mevcut Durum</th>
+                            <th class="text-end pe-4">İşlemler</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3 border shadow-sm" style="width: 45px; height: 45px;">
+                                            <i class="fa-solid fa-user text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark">
+                                                @(item.ApplicationUser != null ? item.ApplicationUser.TamAd : "Kullanıcı Atanmamış")
+                                            </div>
+                                            <div class="small text-muted">
+                                                <i class="fa-regular fa-envelope me-1"></i>@(item.ApplicationUser != null ? item.ApplicationUser.Email : "-")
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @{
+                                        var pAd = item.Pozisyon?.Ad ?? "Tanımsız";
+                                        var badgeClass = "bg-secondary";
+                                        if (pAd.Contains("Mühendis") || pAd.Contains("Muhendis")) { badgeClass = "bg-primary"; }
+                                        else if (pAd.Contains("Yönetici") || pAd.Contains("Admin")) { badgeClass = "bg-danger"; }
+                                        else if (pAd.Contains("Çiftçi") || pAd.Contains("Ciftci")) { badgeClass = "bg-success"; }
+                                        else if (pAd.Contains("Bakım") || pAd.Contains("Teknik")) { badgeClass = "bg-warning text-dark"; }
+                                    }
+                                    <span class="badge @badgeClass rounded-pill px-3 py-2 shadow-sm">
+                                        <i class="fa-solid fa-briefcase me-1"></i> @pAd
+                                    </span>
+                                </td>
+                                <td class="fw-bold text-secondary">
+                                    <code>@item.SicilNo</code>
+                                </td>
+                                <td class="text-muted">
+                                    <i class="fa-regular fa-calendar-check me-1"></i> @item.IseBaslamaTarihi.ToString("dd MMM yyyy")
+                                </td>
+                                <td>
+                                    @if (item.AtananGorevler != null && item.AtananGorevler.Any(g => g.GorevDurumuId != 3))
+                                    {
+                                        var gorevSayisi = item.AtananGorevler.Count(g => g.GorevDurumuId != 3);
+                                        <span class="badge bg-warning text-dark border border-warning px-3 py-2">
+                                            <i class="fa-solid fa-person-digging me-1"></i> @gorevSayisi Aktif Görev
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-light text-success border border-success px-3 py-2">
+                                            <i class="fa-solid fa-circle-check me-1"></i> Göreve Hazır
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group shadow-sm">
+                                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-white border" title="Bilgileri Düzenle">
+                                            <i class="fa-solid fa-pen-to-square text-primary"></i>
+                                        </a>
+
+                                        <form asp-action="Delete" asp-route-id="@item.Id" method="post"
+                                              onsubmit="return confirm('@item.SicilNo sicil numaralı personeli ve bağlı tüm kayıtları silmek istediğinize emin misiniz?');"
+                                              style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-white border" title="Personeli İşten Çıkar / Sil">
+                                                <i class="fa-solid fa-user-slash text-danger"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // Tablo içi araç ipuçlarını aktif et (Bootstrap)
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    </script>
+}s

@@ -1,42 +1,88 @@
-﻿@model AgriManage.DataAccess.Models.Personel
+﻿@model AgriManage.WebApp.Models.ViewModels.PersonelCreateViewModel
 
 @{
     ViewData["Title"] = "Yeni Personel Ekle";
 }
 
 <div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0"><i class="fa-solid fa-user-plus"></i> Yeni Personel Kaydı</h4>
+    <div class="card shadow border-0">
+        <div class="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fa-solid fa-user-plus me-2"></i> Yeni Personel & Kullanıcı Kaydı</h5>
+            <small class="text-white-50">Tek işlemde hesap ve personel kartı oluşturur</small>
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger shadow-sm" role="alert"></div>
+
+                <div class="row">
+                    <div class="col-md-6 border-end pe-4">
+                        <h6 class="text-success fw-bold mb-3 border-bottom pb-2">
+                            <i class="fa-solid fa-lock me-2"></i>Sistem Giriş Bilgileri
+                        </h6>
+
+                        <div class="mb-3">
+                            <label asp-for="TamAd" class="form-label fw-bold small">Ad Soyad</label>
+                            <input asp-for="TamAd" class="form-control" placeholder="Örn: Ahmet Yılmaz" />
+                            <span asp-validation-for="TamAd" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label fw-bold small">Email (Kullanıcı Adı)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
+                                <input asp-for="Email" class="form-control" type="email" placeholder="personel@agrimanage.com" />
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label fw-bold small">Geçici Şifre</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-key"></i></span>
+                                <input asp-for="Password" class="form-control" type="password" placeholder="******" />
+                            </div>
+                            <div class="form-text small text-muted">Personele iletilecek ilk giriş şifresi.</div>
+                            <span asp-validation-for="Password" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 ps-4">
+                        <h6 class="text-primary fw-bold mb-3 border-bottom pb-2">
+                            <i class="fa-solid fa-id-card me-2"></i>Personel Özlük Bilgileri
+                        </h6>
+
+                        <div class="mb-3">
+                            <label asp-for="SicilNo" class="form-label fw-bold small">Sicil Numarası</label>
+                            <input asp-for="SicilNo" class="form-control" placeholder="Örn: P-2026-001" />
+                            <span asp-validation-for="SicilNo" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PozisyonId" class="form-label fw-bold small">Pozisyon / Görev</label>
+                            <select asp-for="PozisyonId" class="form-select" asp-items="Model.PozisyonListesi">
+                                <option value="">-- Pozisyon Seçiniz --</option>
+                            </select>
+                            <span asp-validation-for="PozisyonId" class="text-danger small"></span>
+                            <div class="form-text small text-info"><i class="fa-solid fa-circle-info me-1"></i>Seçilen pozisyona göre sisteme <strong>otomatik yetki</strong> tanımlanacaktır.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="IseBaslamaTarihi" class="form-label fw-bold small">İşe Başlama Tarihi</label>
+                            <input asp-for="IseBaslamaTarihi" class="form-control" type="date" />
+                            <span asp-validation-for="IseBaslamaTarihi" class="text-danger small"></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form asp-action="Create">
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Sicil No / Ad Soyad</label>
-                            <input asp-for="SicilNo" class="form-control" placeholder="Örn: Ahmet Yılmaz (P-055)" />
-                            <span asp-validation-for="SicilNo" class="text-danger"></span>
-                        </div>
+                <hr class="mt-4" />
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Pozisyon / Görev</label>
-                            <select asp-for="PozisyonId" class="form-control" asp-items="ViewBag.PozisyonId"></select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">İşe Başlama Tarihi</label>
-                            <input asp-for="IseBaslamaTarihi" class="form-control" type="date" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
-                        </div>
-
-                        <div class="d-grid mt-4">
-                            <button type="submit" class="btn btn-success">Personeli Kaydet</button>
-                            <a asp-action="Index" class="btn btn-outline-secondary mt-2">İptal</a>
-                        </div>
-                    </form>
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-outline-secondary">İptal</a>
+                    <button type="submit" class="btn btn-success px-4 fw-bold">
+                        <i class="fa-solid fa-check me-1"></i> Kaydı Tamamla
+                    </button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>

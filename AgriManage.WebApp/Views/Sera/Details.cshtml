@@ -1,0 +1,221 @@
+﻿@model AgriManage.WebApp.DTOs.SeraDto
+@{
+    ViewData["Title"] = Model.Ad + " Detayları";
+    var hasatlar = ViewBag.Hasatlar as List<AgriManage.WebApp.DTOs.HasatDto>;
+    var ekimler = ViewBag.Ekimler as List<AgriManage.WebApp.DTOs.EkimDto>;
+
+    // Grafik verileri
+    var sonHasatlar = hasatlar?.Take(5).OrderBy(x => x.Tarih).ToList() ?? new List<AgriManage.WebApp.DTOs.HasatDto>();
+    var etiketler = string.Join(",", sonHasatlar.Select(x => "'" + x.Tarih.ToString("dd MMM") + "'"));
+    var veriler = string.Join(",", sonHasatlar.Select(x => x.MiktarKg.ToString().Replace(",", ".")));
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-success"><i class="fa-solid fa-plant-wilt me-2"></i>@Model.Ad</h2>
+            <div class="mt-1">
+                <span class="badge bg-light text-dark border"><i class="fa-solid fa-location-dot me-1"></i> @Model.Konum</span>
+                <span class="badge bg-light text-dark border"><i class="fa-solid fa-ruler-combined me-1"></i> @Model.Buyukluk m²</span>
+                <span class="badge bg-light text-dark border"><i class="fa-solid fa-warehouse me-1"></i> @Model.Tip</span>
+            </div>
+        </div>
+        <div>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning shadow-sm fw-bold">
+                <i class="fa-solid fa-pen"></i> Düzenle
+            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary">Geri Dön</a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-5">
+
+            <div class="card shadow-sm border-0 mb-4 bg-light">
+                <div class="card-header bg-warning text-dark fw-bold d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-seedling me-2"></i>Topraktaki Ürünler</span>
+                    <button class="btn btn-sm btn-dark" type="button" data-bs-toggle="collapse" data-bs-target="#yeniEkimFormu" title="Yeni Ürün Ek">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+                <div class="card-body p-2">
+
+                    <div class="collapse mb-3" id="yeniEkimFormu">
+                        <div class="card card-body border p-2 bg-white">
+                            <h6 class="small fw-bold text-secondary">Yeni Tohum/Fide Ekimi</h6>
+                            <form asp-action="AddEkim" method="post">
+                                <input type="hidden" name="seraId" value="@Model.Id" />
+                                <div class="input-group input-group-sm mb-2">
+                                    <span class="input-group-text"><i class="fa-solid fa-tag"></i></span>
+                                    <input type="text" name="urunAdi" class="form-control" placeholder="Ürün Adı (Örn: Çilek)" required>
+                                </div>
+                                <div class="input-group input-group-sm mb-2">
+                                    <span class="input-group-text"><i class="fa-solid fa-hashtag"></i></span>
+                                    <input type="number" name="adet" class="form-control" placeholder="Miktar (Adet/m²)" required>
+                                </div>
+                                <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold">Kaydet</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    @if (ekimler != null && ekimler.Any())
+                    {
+                        @foreach (var urun in ekimler)
+                        {
+                            <div class="card mb-2 border-0 shadow-sm">
+                                <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="fw-bold text-success">@urun.UrunAdi</span>
+                                        <div class="small text-muted" style="font-size: 11px;">
+                                            <i class="fa-regular fa-calendar me-1"></i>@urun.EkimTarihi.ToString("dd MMM")
+                                            <span class="ms-1 border-start ps-1">@urun.AdetVeyaM2 Adet</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-success fw-bold"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#hasatModal-@urun.Id">
+                                        <i class="fa-solid fa-basket-shopping"></i> Hasat
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="modal fade" id="hasatModal-@urun.Id" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered modal-sm">
+                                    <div class="modal-content">
+                                        <div class="modal-header bg-success text-white py-2">
+                                            <h6 class="modal-title fw-bold">@urun.UrunAdi Hasadı</h6>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form asp-action="AddHasat" method="post">
+                                                <input type="hidden" name="seraId" value="@Model.Id" />
+                                                <input type="hidden" name="ekimId" value="@urun.Id" />
+                                                <input type="hidden" name="urunAdi" value="@urun.UrunAdi" />
+
+                                                <div class="mb-2">
+                                                    <label class="small fw-bold">Miktar (Kg)</label>
+                                                    <input type="number" name="miktar" class="form-control" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="small fw-bold">Kazanç (TL)</label>
+                                                    <input type="number" name="gelir" class="form-control" required>
+                                                </div>
+
+                                                <div class="form-check bg-light p-2 border rounded mb-3">
+                                                    <input class="form-check-input ms-1" type="checkbox" name="kokSokumu" value="true" id="kokCheck-@urun.Id">
+                                                    <label class="form-check-label small fw-bold text-danger ms-2" for="kokCheck-@urun.Id">
+                                                        Köküyle Söküldü (Son Hasat)
+                                                    </label>
+                                                    <div class="text-muted fst-italic mt-1" style="font-size: 10px; margin-left: 24px;">
+                                                        Bunu seçersen ürün topraktan söküldü olarak işaretlenir ve listeden kalkar.
+                                                    </div>
+                                                </div>
+
+                                                <button type="submit" class="btn btn-success w-100 fw-bold">Hasadı Kaydet</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted bg-white rounded border border-dashed">
+                            <i class="fa-solid fa-wind fa-2x mb-2 text-secondary"></i><br />
+                            <span class="small">Sera şu an boş.<br />Yukarıdan yeni ekim yapabilirsin.</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white fw-bold"><i class="fa-solid fa-boxes-stacked me-2"></i>Stok / Envanter</div>
+                <div class="card-body">
+                    <p class="small text-muted mb-2">Gübre, ilaç ve ekipman durumunu kontrol et.</p>
+                    <a asp-controller="Envanter" asp-action="Index" asp-route-tarlaId="@Model.Id" class="btn btn-primary w-100 btn-sm">
+                        Envantere Git
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white fw-bold border-bottom">
+                    <i class="fa-solid fa-clock-rotate-left me-2 text-secondary"></i>Hasat Geçmişi
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 small align-middle">
+                        <thead class="bg-light">
+                            <tr><th>Tarih</th><th>Ürün</th><th>Miktar</th><th>Gelir</th></tr>
+                        </thead>
+                        <tbody>
+                            @if (hasatlar != null && hasatlar.Any())
+                            {
+                                foreach (var h in hasatlar)
+                                {
+                                    <tr>
+                                        <td>@h.Tarih.ToString("dd.MM.yyyy")</td>
+                                        <td>
+                                            @h.UrunAdi
+                                            @if (h.EkimId != null)
+                                            {
+                                                <i class="fa-solid fa-link text-muted ms-1" title="Ekim kaydına bağlı" style="font-size: 10px;"></i>
+                                            }
+                                        </td>
+                                        <td class="fw-bold">@h.MiktarKg Kg</td>
+                                        <td class="text-success fw-bold">@h.Gelir.ToString("C2")</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="4" class="text-center text-muted py-3">Henüz hasat yapılmadı.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card shadow border-0">
+                <div class="card-header bg-dark text-white fw-bold">
+                    <i class="fa-solid fa-chart-line me-2"></i>Verimlilik Analizi
+                </div>
+                <div class="card-body">
+                    <canvas id="hasatChart" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('hasatChart');
+    const etiketler = [@Html.Raw(etiketler)];
+    const veriler = [@Html.Raw(veriler)];
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: etiketler.length > 0 ? etiketler : ['Veri Yok'],
+            datasets: [{
+                label: 'Hasat Miktarı (Kg)',
+                data: veriler.length > 0 ? veriler : [0],
+                borderColor: '#198754',
+                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: '#198754'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, grid: { borderDash: [2, 4] } } }
+        }
+    });
+</script>

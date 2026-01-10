@@ -5,52 +5,70 @@
 }
 
 <div class="container mt-4">
-    <div class="card shadow border-0">
-        <div class="card-header bg-success text-white">
-            <h5 class="mb-0"><i class="fa-solid fa-list-check me-2"></i>Personele İş Emri Ver</h5>
-        </div>
-        <div class="card-body bg-light">
-            <form asp-action="GorevAta">
-                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">Personel (Sicil No)</label>
-                        <select asp-for="PersonelId" class="form-select" asp-items="ViewBag.PersonelId">
-                            <option value="">-- Personel Seçiniz --</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label fw-bold">İlgili Tarla</label>
-                        <select asp-for="TarlaId" class="form-select" asp-items="ViewBag.TarlaId">
-                            <option value="">-- Tarla Seçiniz (Opsiyonel) --</option>
-                        </select>
-                    </div>
-
-                    <div class="col-12 mb-3">
-                        <label asp-for="Baslik" class="form-label fw-bold">Görev Başlığı</label>
-                        <input asp-for="Baslik" class="form-control" placeholder="Örn: Gübreleme İşlemi" />
-                        <span asp-validation-for="Baslik" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-12 mb-3">
-                        <label asp-for="Aciklama" class="form-label">Açıklama</label>
-                        <textarea asp-for="Aciklama" class="form-control" rows="3"></textarea>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label asp-for="PlanlananBaslangic" class="form-label fw-bold">Başlangıç Tarihi</label>
-                        <input asp-for="PlanlananBaslangic" type="date" class="form-control" />
-                    </div>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0 fw-bold"><i class="fa-solid fa-clipboard-check me-2"></i>Personele İş Emri Oluştur</h5>
                 </div>
+                <div class="card-body bg-light">
+                    <form asp-action="GorevAta">
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-                <hr />
-                <div class="d-flex justify-content-end gap-2">
-                    <a asp-action="Index" class="btn btn-secondary">İptal</a>
-                    <button type="submit" class="btn btn-success px-4">Kaydet</button>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-primary">Görevli Personel</label>
+                                <select asp-for="PersonelId" class="form-select shadow-sm" asp-items="ViewBag.PersonelId">
+                                    <option value="">-- Personel Seçiniz --</option>
+                                </select>
+                                <span asp-validation-for="PersonelId" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-success">İlgili Tarla / Alan</label>
+                                <select asp-for="TarlaId" class="form-select shadow-sm" asp-items="ViewBag.TarlaId">
+                                    <option value="">-- Genel Görev (Tarla Yok) --</option>
+                                </select>
+                                <span asp-validation-for="TarlaId" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="card card-body border p-3 mb-3 bg-white">
+                            <div class="mb-3">
+                                <label asp-for="Baslik" class="form-label fw-bold">Görev Başlığı</label>
+                                <input asp-for="Baslik" class="form-control" placeholder="Örn: 2 Nolu Parsel Sulama" />
+                                <span asp-validation-for="Baslik" class="text-danger small"></span>
+                            </div>
+
+                            <div class="mb-0">
+                                <label asp-for="Aciklama" class="form-label fw-bold">Detaylı Açıklama</label>
+                                <textarea asp-for="Aciklama" class="form-control" rows="3" placeholder="Yapılacak işin detaylarını giriniz..."></textarea>
+                                <span asp-validation-for="Aciklama" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="PlanlananBaslangic" class="form-label fw-bold">Planlanan Başlangıç</label>
+                                <input asp-for="PlanlananBaslangic" type="date" class="form-control shadow-sm" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                                <span asp-validation-for="PlanlananBaslangic" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="text-muted small">
+                                    <i class="fa-solid fa-info-circle me-1"></i> Görev durumu varsayılan olarak "Bekliyor" atanacaktır.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                            <a asp-action="Index" class="btn btn-secondary">Vazgeç</a>
+                            <button type="submit" class="btn btn-warning fw-bold px-4">
+                                <i class="fa-solid fa-paper-plane me-1"></i> Görevi Ata
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>

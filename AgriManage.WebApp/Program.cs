@@ -1,81 +1,63 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using AgriManage.DataAccess.Data;
-using AgriManage.DataAccess.Models;      // ApplicationUser s�n�f� burada
-using AgriManage.DataAccess.Repository;  // Repository ve UnitOfWork aray�zleri burada
-using AgriManage.BusinessLogic.Services; // TarlaService ve di�er servisler burada
+using AgriManage.DataAccess.Models;
+using AgriManage.DataAccess.Repository;
+using AgriManage.BusinessLogic.Services;
+using AgriManage.WebApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================================
-// 1. VER�TABANI BA�LANTISI (DATABASE CONNECTION)
-// ============================================================
-// appsettings.json dosyas�ndan ba�lant� adresini okuyoruz.
+// 1. VERİTABANI BAĞLANTISI
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-// SQL Server kullan�m� ve Migration'lar�n nerede tutuldu�u ayar�
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString,
     b => b.MigrationsAssembly("AgriManage.DataAccess")));
 
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-// ============================================================
-// 2. K�ML�K VE YETK�LEND�RME S�STEM� (IDENTITY)
-// ============================================================
-// BURASI �OK �NEML�: 
-// Standart 'IdentityUser' yerine kendi olu�turdu�umuz 'ApplicationUser' s�n�f�n� kullan�yoruz.
-// Ayr�ca '.AddRoles<IdentityRole>()' ekleyerek Admin/Manager/User gibi rol sistemini a��yoruz.
-// .AddRoles<IdentityRole>() kısmını ekliyoruz:
-builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
-    .AddRoles<IdentityRole>() // <--- KRİTİK EKLEME BURASI
+// 2. KİMLİK VE YETKİLENDİRME (IDENTITY)
+builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
+    options.SignIn.RequireConfirmedAccount = false;
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 3;
+})
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// ============================================================
-// 3. BA�IMLILIK ENJEKS�YONU (DEPENDENCY INJECTION)
-// ============================================================
-// Projemizdeki aray�zlerin (Interface) kar��l���nda hangi s�n�flar�n �al��aca��n� belirtiyoruz.
-
-// A) Generic Repository: "IRepository istenirse Repository �ret"
+// 3. BAĞIMLILIK ENJEKSİYONU (DEPENDENCY INJECTION)
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-
-// B) Unit Of Work: "Veritaban� kaydetme i�lemlerini y�netecek patron"
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-// C) Servislerimiz (�� Mant���): "ITarlaService istenirse TarlaService �al��s�n"
 builder.Services.AddScoped<ITarlaService, TarlaService>();
-// Diğer servislerin altına ekle:
-builder.Services.AddScoped<IAnalizService, AnalizService>(); // --- YENİ EKLENEN ---
-// Diğer AddScoped satırlarının yanına ekle:
+builder.Services.AddScoped<IAnalizService, AnalizService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IVardiyaService, VardiyaService>();
+builder.Services.AddScoped<TokenService>(); 
+builder.Services.AddScoped<SeraService>();
 
-// --- MİKROSERVİS BAĞLANTISI BAŞLANGIÇ ---
-// API ile haberleşmek için HttpClient servisini ekliyoruz.
-// Bu sayede Controller'lar "bana InventoryClient ver" diyebilecek.
-// Token servisini sisteme tanıtıyoruz
-builder.Services.AddScoped<AgriManage.WebApp.Services.TokenService>();
+// 4. MİKROSERVİS BAĞLANTILARI
 builder.Services.AddHttpClient("InventoryClient", client =>
 {
-    // appsettings.json'dan adresi okuyoruz (https://localhost:7096)
-    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:InventoryBaseUrl"]);
+    var url = builder.Configuration["ApiSettings:InventoryBaseUrl"] ?? "https://localhost:7096";
+    client.BaseAddress = new Uri(url);
 });
-// --- MİKROSERVİS BAĞLANTISI BİTİŞ ---
 
+builder.Services.AddHttpClient("GreenhouseClient", client =>
+{
+    var url = builder.Configuration["ApiSettings:GreenhouseBaseUrl"] ?? "https://localhost:7002";
+    client.BaseAddress = new Uri(url);
+});
 
-// ============================================================
-// 4. MVC VE G�R�N�M AYARLARI
-// ============================================================
+// 5. MVC
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// ============================================================
-// 5. HTTP �STEK Y�NET�M� (PIPELINE)
-// ============================================================
-
-// Geli�tirme ortam�ndaysak hatalar� detayl� g�ster
+// 6. PIPELINE
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -83,117 +65,84 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // G�venlik i�in HSTS (Production ortam� i�in)
     app.UseHsts();
 }
 
-app.UseHttpsRedirection(); // HTTP isteklerini HTTPS'e �evir
-app.UseStaticFiles();      // wwwroot klas�r�n� (CSS, JS, Resimler) d��ar� a�
+app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 app.UseRouting();
 
-// �NCE: Kimlik Do�rulama (Sen kimsin? Giri� yapt�n m�?)
 app.UseAuthentication();
-// SONRA: Yetkilendirme (Bu sayfay� g�rmeye yetkin var m�?)
 app.UseAuthorization();
 
-// Varsay�lan Rota: Site a��l�nca Home/Index'e git
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Identity sayfalar� (Login/Register) i�in gerekli rota
 app.MapRazorPages();
-// ... Yukarıdaki kodlar (builder, app, pipeline vs.) aynen kalsın ...
 
-// ==================================================================
-// ==> GARANTİLİ VERİ YÜKLEME KODU (HATASIZ) <==
-// ==================================================================
+// 7. DATA SEEDING (Düzeltilmiş Hali)
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<AgriManage.DataAccess.Data.ApplicationDbContext>();
-        var userManager = services.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<AgriManage.DataAccess.Models.ApplicationUser>>();
-        var roleManager = services.GetRequiredService<Microsoft.AspNetCore.Identity.RoleManager<Microsoft.AspNetCore.Identity.IdentityRole>>();
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-        // 1. ROLLERİ OLUŞTUR
-        if (!roleManager.RoleExistsAsync("Admin").Result) roleManager.CreateAsync(new Microsoft.AspNetCore.Identity.IdentityRole("Admin")).Wait();
-        if (!roleManager.RoleExistsAsync("Ciftci").Result) roleManager.CreateAsync(new Microsoft.AspNetCore.Identity.IdentityRole("Ciftci")).Wait();
+        // Rolleri Oluştur
+        if (!roleManager.RoleExistsAsync("Admin").Result) roleManager.CreateAsync(new IdentityRole("Admin")).Wait();
+        if (!roleManager.RoleExistsAsync("Ciftci").Result) roleManager.CreateAsync(new IdentityRole("Ciftci")).Wait();
+        if (!roleManager.RoleExistsAsync("User").Result) roleManager.CreateAsync(new IdentityRole("User")).Wait();
 
-        // 2. KULLANICIYI BUL (MAİL ADRESİNİZİ KONTROL EDİN)
-        var adminUser = userManager.FindByEmailAsync("MelihTest@gmail.com").Result;
+        // Admin Kullanıcısı
+        var adminEmail = "MelihTest@gmail.com";
+        var adminUser = userManager.FindByEmailAsync(adminEmail).Result;
+
+        if (adminUser == null)
+        {
+            adminUser = new ApplicationUser
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true,
+                TamAd = "Melih Admin" // <--- DÜZELTİLEN KISIM BURASI
+            };
+            var result = userManager.CreateAsync(adminUser, "Admin123!").Result;
+
+            if (result.Succeeded)
+            {
+                userManager.AddToRoleAsync(adminUser, "Admin").Wait();
+            }
+        }
 
         if (adminUser != null)
         {
-            // A) LOKASYONLARI KONTROL ET VE OLUŞTUR
-            // "Merkez" lokasyonunu bulamazsa oluşturur
             var merkez = context.Lokasyonlar.FirstOrDefault(x => x.Ad == "Merkez");
             if (merkez == null)
             {
-                merkez = new AgriManage.DataAccess.Models.Lokasyon { Ad = "Merkez" };
+                merkez = new Lokasyon { Ad = "Merkez" };
                 context.Lokasyonlar.Add(merkez);
-                context.SaveChanges(); // ID oluşsun diye hemen kaydediyoruz
+                context.SaveChanges();
             }
 
-            // "Köy" lokasyonunu bulamazsa oluşturur
-            var koy = context.Lokasyonlar.FirstOrDefault(x => x.Ad == "Köy");
-            if (koy == null)
-            {
-                koy = new AgriManage.DataAccess.Models.Lokasyon { Ad = "Köy" };
-                context.Lokasyonlar.Add(koy);
-                context.SaveChanges(); // ID oluşsun diye hemen kaydediyoruz
-            }
-
-            // B) TARLALARI EKLE (Eğer hiç tarlası yoksa)
             if (!context.Tarlalar.Any(t => t.ApplicationUserId == adminUser.Id))
             {
                 context.Tarlalar.AddRange(
-                    new AgriManage.DataAccess.Models.Tarla { Ad = "Büyük Ova", AlanDonum = 120, TapuAdaParsel = "101/5", LokasyonId = merkez.Id, ApplicationUserId = adminUser.Id },
-                    new AgriManage.DataAccess.Models.Tarla { Ad = "Dere Kenarı", AlanDonum = 45.5m, TapuAdaParsel = "203/1", LokasyonId = koy.Id, ApplicationUserId = adminUser.Id },
-                    new AgriManage.DataAccess.Models.Tarla { Ad = "Yamaç Bahçesi", AlanDonum = 12, TapuAdaParsel = "115/9", LokasyonId = koy.Id, ApplicationUserId = adminUser.Id },
-                    new AgriManage.DataAccess.Models.Tarla { Ad = "Kuzey Tarlası", AlanDonum = 80, TapuAdaParsel = "305/4", LokasyonId = merkez.Id, ApplicationUserId = adminUser.Id }
+                    new Tarla { Ad = "Büyük Ova", AlanDonum = 120, TapuAdaParsel = "101/5", LokasyonId = merkez.Id, ApplicationUserId = adminUser.Id },
+                    new Tarla { Ad = "Dere Kenarı", AlanDonum = 45.5m, TapuAdaParsel = "203/1", LokasyonId = merkez.Id, ApplicationUserId = adminUser.Id }
                 );
-                context.SaveChanges(); // Tarlaları kaydet
+                context.SaveChanges();
             }
         }
     }
     catch (Exception ex)
     {
-        // Bir hata olursa programı durdurma, sadece hatayı ekrana yaz.
-        Console.WriteLine("************* HATA OLUŞTU *************");
+        Console.WriteLine("************* SEED HATA *************");
         Console.WriteLine(ex.Message);
     }
 }
-// === VERİTABANI SEED (TOHUMLAMA) BAŞLANGICI ===
-/*using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<AgriManage.DataAccess.Data.ApplicationDbContext>();
 
-        // Seeder sınıfımızı çağırıyoruz
-        AgriManage.DataAccess.Data.DbSeeder.Seed(context);
-    }
-    catch (Exception ex)
-    {
-        // Hata olursa loglara yaz
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Veritabanı seed işlemi sırasında bir hata oluştu.");
-    }
-}*/
-// === VERİTABANI SEED BİTİŞİ ===
-// ==================================================================
-// ==================================================================
-// ==> EKSİK OLAN PARÇA (EN ALTA YAPIŞTIRIN) <==
-// ==================================================================
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-
-app.MapRazorPages(); // Identity sayfalarının (Giriş/Kayıt) çalışması için şart!
-
-app.Run(); // <--- İŞTE BU! Motoru çalıştıran kod.
+app.Run();

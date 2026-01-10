@@ -1,0 +1,33 @@
+﻿@model AgriManage.WebApp.DTOs.SeraDto
+@{
+    ViewData["Title"] = "Sera Düzenle";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark fw-bold">Sera Bilgilerini Güncelle</div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Sera Adı</label>
+                            <input asp-for="Ad" class="form-control" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Büyüklük</label>
+                            <input asp-for="Buyukluk" class="form-control" />
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning">Güncelle</button>
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-light">İptal</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

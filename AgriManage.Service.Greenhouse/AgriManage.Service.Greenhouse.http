@@ -1,0 +1,6 @@
+@AgriManage.Service.Greenhouse_HostAddress = http://localhost:5258
+
+GET {{AgriManage.Service.Greenhouse_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

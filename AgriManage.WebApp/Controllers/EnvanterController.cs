@@ -138,15 +138,17 @@ namespace AgriManage.WebApp.Controllers
         // 5. AJAX İÇİN: TRANSFER İŞLEMİNİ YAP (POST)
         // ---------------------------------------------------------
         [HttpPost]
-        public async Task<IActionResult> UrunTransferEt(int urunId, int hedefTarlaId)
+        public async Task<IActionResult> UrunTransferEt(int urunId, int hedefTarlaId, int miktar)
         {
             var token = _tokenService.TokenOlustur(User.Identity.Name, User.FindFirstValue(ClaimTypes.Role) ?? "User", User.FindFirstValue(ClaimTypes.NameIdentifier));
             var client = _httpClientFactory.CreateClient("InventoryClient");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            // API'deki "Assign" metodunu çağır
-            // API Rotası: PUT /api/products/assign?productId=...&targetTarlaId=...
-            var response = await client.PutAsync($"/api/products/assign?productId={urunId}&targetTarlaId={hedefTarlaId}", null);
+            // API'deki yeni rotayı çağırıyoruz (quantity parametresi eklendi)
+            // Örn: POST /api/products/transfer?productId=1&targetTarlaId=2&quantity=10
+            var url = $"/api/products/transfer?productId={urunId}&targetTarlaId={hedefTarlaId}&quantity={miktar}";
+
+            var response = await client.PostAsync(url, null);
 
             if (response.IsSuccessStatusCode)
             {
@@ -154,5 +156,30 @@ namespace AgriManage.WebApp.Controllers
             }
             return BadRequest();
         }
+        // ---------------------------------------------------------
+        // 6. TÜKETİM KÖPRÜSÜ (WEB -> API)
+        // ---------------------------------------------------------
+        [HttpPost]
+        public async Task<IActionResult> UrunTuket(int urunId, int miktar)
+        {
+            // Token Al
+            var token = _tokenService.TokenOlustur(User.Identity.Name, User.FindFirstValue(ClaimTypes.Role) ?? "User", User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+            // İstemci Hazırla
+            var client = _httpClientFactory.CreateClient("InventoryClient");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            // API'ye İstek At: POST /api/products/consume
+            var response = await client.PostAsync($"/api/products/consume?productId={urunId}&quantity={miktar}", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return Ok();
+            }
+
+            // Hata varsa 400 dön (JavaScript bunu yakalayıp alert verecek)
+            return BadRequest();
+        }
+
     }
 }

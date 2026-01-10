@@ -3,14 +3,13 @@
 @{
     ViewData["Title"] = "Envanter Yönetimi";
 
-    // ViewBag null gelirse 0 (Merkez Depo) kabul et
+    // Güvenli Cast İşlemi
     int tarlaId = 0;
     if (ViewBag.SeciliTarlaId != null)
     {
         tarlaId = (int)ViewBag.SeciliTarlaId;
     }
 
-    // TarlaId 0 ise burası Merkez Depodur
     bool merkezDepoMu = (tarlaId == 0);
 }
 
@@ -32,21 +31,21 @@
                 }
             </h2>
             <p class="text-muted">
-                @(merkezDepoMu ? "Şirketin tüm stok girişi ve satın alma işlemleri buradan yapılır." : "Bu tarlaya zimmetlenmiş ekipman ve ürünler.")
+                @(merkezDepoMu ? "Şirketin tüm stok girişi ve satın alma işlemleri buradan yapılır." : "Bu tarladaki ürünleri yönetebilir, kullanabilir veya depoya iade edebilirsiniz.")
             </p>
         </div>
 
         <div>
             @if (merkezDepoMu)
             {
-                // SENARYO 1: MERKEZ DEPO (Yeni Mal Girşi)
+                // SENARYO A: MERKEZ DEPO (Satın Alma)
                 <a asp-action="Create" asp-route-tarlaId="0" class="btn btn-success shadow">
-                    <i class="fa-solid fa-cart-plus me-2"></i> Yeni Stok Girişi (Satın Alma)
+                    <i class="fa-solid fa-cart-plus me-2"></i> Yeni Stok Girişi
                 </a>
             }
             else
             {
-                // SENARYO 2: TARLA (Depodan Atama)
+                // SENARYO B: TARLA (Depodan Mal Çekme)
                 <button class="btn btn-warning shadow text-dark fw-bold" onclick="modalAc()">
                     <i class="fa-solid fa-dolly me-2"></i> Depodan Malzeme Getir
                 </button>
@@ -57,66 +56,74 @@
     @if (ViewBag.Hata != null)
     {
         <div class="alert alert-danger shadow-sm">
-            <i class="fa-solid fa-triangle-exclamation me-2"></i> @ViewBag.Hata
+            <i class="fa-solid fa-circle-exclamation me-2"></i>@ViewBag.Hata
         </div>
     }
 
     <div class="card shadow-sm border-0">
         <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="ps-4">Ürün Adı</th>
-                            <th>Stok</th>
-                            <th>Birim Fiyat</th>
-                            <th>Toplam Değer</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model != null && Model.Any())
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Ürün Adı</th>
+                        <th>Mevcut Stok</th>
+                        <th>Birim Fiyat</th>
+                        <th>Toplam Değer</th>
+                        @if (!merkezDepoMu)
                         {
-                            foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td class="ps-4 fw-bold text-dark">@item.Name</td>
-                                    <td>
-                                        <span class="badge bg-info text-dark border border-info bg-opacity-25">
-                                            @item.StockQuantity Adet/Kg
-                                        </span>
-                                    </td>
-                                    <td>@item.Price.ToString("C2")</td>
-                                    <td class="fw-bold text-success">
-                                        @((item.StockQuantity * item.Price).ToString("C2"))
-                                    </td>
-                                </tr>
-                            }
+                            <th class="text-end pe-4" style="min-width: 200px;">Operasyonlar</th>
                         }
-                        else
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
                         {
                             <tr>
-                                <td colspan="4" class="text-center py-5 text-muted">
-                                    <i class="fa-solid fa-box-open fa-3x mb-3 opacity-25"></i><br />
-                                    @if (merkezDepoMu)
-                                    {
-                                        <span class="fs-5">Depoda henüz ürün yok.</span>
-                                
-                                        <br />
-                                        <small>"Yeni Stok Girişi" butonunu kullanarak ürün ekleyin.</small>
-                                    }
-                                    else
-                                    {
-                                        <span class="fs-5">Bu tarlaya atanmış ürün yok.</span>
-                                
-                                        <br />
-                                        <small>Merkez depodan transfer yaparak ekipman getirebilirsiniz.</small>
-                                    }
+                                <td class="ps-4 fw-bold text-dark">@item.Name</td>
+                                <td>
+                                    <span class="badge bg-info text-dark border border-info bg-opacity-25 fs-6">
+                                        @item.StockQuantity Adet/Kg
+                                    </span>
                                 </td>
+                                <td>@item.Price.ToString("C2")</td>
+                                <td class="fw-bold text-success">
+                                    @((item.StockQuantity * item.Price).ToString("C2"))
+                                </td>
+
+                                @if (!merkezDepoMu)
+                                {
+                                    <td class="text-end pe-4">
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-sm btn-success"
+                                                    onclick="tuketimModalAc(@item.Id, '@item.Name', @item.StockQuantity)"
+                                                    title="Tarlada Kullan">
+                                                <i class="fa-solid fa-check-double me-1"></i> Kullan
+                                            </button>
+
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    onclick="iadeEt(@item.Id, '@item.Name', @item.StockQuantity)"
+                                                    title="Merkez Depoya İade Et">
+                                                <i class="fa-solid fa-rotate-left"></i> İade
+                                            </button>
+                                        </div>
+                                    </td>
+                                }
                             </tr>
                         }
-                    </tbody>
-                </table>
-            </div>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-box-open fa-3x mb-3 opacity-25"></i><br />
+                                @(merkezDepoMu ? "Depo şu an boş." : "Bu tarlada kayıtlı ürün yok.")
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -130,7 +137,7 @@
         else
         {
             <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
-                <i class="fa-solid fa-house me-1"></i> Ana Sayfaya Dön
+                <i class="fa-solid fa-house me-1"></i> Ana Sayfa
             </a>
         }
     </div>
@@ -138,106 +145,192 @@
 
 @if (!merkezDepoMu)
 {
-    <div class="modal fade" id="transferModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="transferModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
+            <div class="modal-content">
                 <div class="modal-header bg-warning">
-                    <h5 class="modal-title text-dark fw-bold">
-                        <i class="fa-solid fa-dolly me-2"></i>Merkez Depodan Transfer
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    <h5 class="modal-title text-dark fw-bold"><i class="fa-solid fa-dolly me-2"></i>Depodan Transfer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4">
-                    <div class="alert alert-light border mb-3">
-                        <i class="fa-solid fa-circle-info text-info me-2"></i>
-                        Merkez depoda (boşta) duran ürünleri bu tarlaya zimmetleyebilirsiniz.
+                <div class="modal-body">
+                    <div class="alert alert-light border mb-3 small">
+                        Merkez depodaki boşta duran ürünleri bu tarlaya zimmetleyebilirsiniz.
                     </div>
-
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Depodaki Ürün Seçimi:</label>
-                        <select id="depoUrunSelect" class="form-select form-select-lg">
-                            <option value="">Yükleniyor...</option>
+                        <label class="form-label fw-bold">Depodaki Ürün:</label>
+                        <select id="depoUrunSelect" class="form-select" onchange="stokBilgisiGuncelle()">
+                            <option value="" data-stok="0">Yükleniyor...</option>
                         </select>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Alınacak Miktar:</label>
+                        <div class="input-group">
+                            <input type="number" id="transferMiktar" class="form-control" value="1" min="1">
+                            <span class="input-group-text text-muted" id="stokLimitBilgisi">Max: 0</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-footer bg-light">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                    <button type="button" class="btn btn-warning fw-bold text-dark px-4" onclick="transferiTamamla()">
-                        <i class="fa-solid fa-check me-2"></i> Transfer Et
-                    </button>
+                    <button type="button" class="btn btn-warning text-dark fw-bold" onclick="transferYap()">Onayla ve Aktar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="iadeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-rotate-left me-2"></i>Depoya İade Et</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong><span id="iadeUrunAdi"></span></strong> ürününü merkez depoya geri göndermek üzeresiniz.</p>
+                    <input type="hidden" id="iadeUrunId" />
+
+                    <label class="form-label fw-bold">İade Miktarı:</label>
+                    <div class="input-group">
+                        <input type="number" id="iadeMiktar" class="form-control" value="1" min="1" />
+                        <span class="input-group-text">Max: <span id="iadeMaxStok"></span></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                    <button type="button" class="btn btn-danger fw-bold" onclick="iadeyiTamamla()">İadeyi Onayla</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="tuketimModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-check-double me-2"></i>Sarfiyat / Kullanım</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-light border border-success mb-3">
+                        <strong><span id="tuketimUrunAdi"></span></strong> tarlada kullanıldı olarak işaretlenecek ve stoktan düşülecektir.
+                    </div>
+                    <input type="hidden" id="tuketimUrunId" />
+
+                    <label class="form-label fw-bold">Kullanılan Miktar:</label>
+                    <div class="input-group">
+                        <input type="number" id="tuketimMiktar" class="form-control" value="1" min="1" />
+                        <span class="input-group-text">Mevcut: <span id="tuketimMaxStok">0</span></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                    <button type="button" class="btn btn-success fw-bold" onclick="tuketimiTamamla()">Kaydet ve Düş</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Modalı açar ve verileri yükler
+        // ----------------------------------------------------
+        // 1. TRANSFER İŞLEMLERİ (PULL)
+        // ----------------------------------------------------
         function modalAc() {
-            // 1. Modalı Göster
             var myModal = new bootstrap.Modal(document.getElementById('transferModal'));
             myModal.show();
 
-            // 2. Depodaki Ürünleri Çek (API)
             fetch('/Envanter/GetDepoUrunleri')
-                .then(response => {
-                    if (!response.ok) throw new Error("API Hatası");
-                    return response.json();
-                })
+                .then(res => res.json())
                 .then(data => {
                     var select = document.getElementById('depoUrunSelect');
-                    select.innerHTML = '<option value="">-- Bir Ürün Seçiniz --</option>';
-
-                    if (data.length === 0) {
-                        select.innerHTML = '<option value="" disabled>Depoda boşta ürün yok!</option>';
-                        return;
+                    select.innerHTML = '<option value="" data-stok="0">-- Seçiniz --</option>';
+                    if(data.length === 0) {
+                        select.innerHTML = '<option disabled>Depo Boş!</option>'; return;
                     }
-
                     data.forEach(item => {
-                        // Fiyatı formatla
                         let fiyat = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(item.price);
-                        select.innerHTML += `<option value="${item.id}">${item.name} (Stok: ${item.stockQuantity}) - ${fiyat}</option>`;
+                        select.innerHTML += `<option value="${item.id}" data-stok="${item.stockQuantity}">${item.name} (Stok: ${item.stockQuantity}) - ${fiyat}</option>`;
                     });
-                })
-                .catch(err => {
-                    console.error('Hata:', err);
-                    document.getElementById('depoUrunSelect').innerHTML = '<option>Veri çekilemedi!</option>';
                 });
         }
 
-        // Seçilen ürünü tarlaya atar
-        function transferiTamamla() {
+        function stokBilgisiGuncelle() {
+            var select = document.getElementById('depoUrunSelect');
+            var stok = select.options[select.selectedIndex].getAttribute('data-stok');
+            document.getElementById('transferMiktar').max = stok;
+            document.getElementById('transferMiktar').value = 1;
+            document.getElementById('stokLimitBilgisi').innerText = "Max: " + stok;
+        }
+
+        function transferYap() {
             var urunId = document.getElementById('depoUrunSelect').value;
-            var hedefTarlaId = '@tarlaId'; // Razor'dan gelen değer
+            var miktar = document.getElementById('transferMiktar').value;
+            var hedefTarlaId = '@tarlaId';
 
-            if (!urunId) {
-                alert("Lütfen listeden bir ürün seçin!");
-                return;
-            }
+            if(!urunId || miktar < 1) { alert("Lütfen ürün ve geçerli miktar girin."); return; }
+            apiTransfer(urunId, hedefTarlaId, miktar);
+        }
 
-            // Butonu kilitle (çift tıklamayı önle)
-            var btn = document.querySelector("button[onclick='transferiTamamla()']");
-            var eskiHtml = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> İşleniyor...';
+        // ----------------------------------------------------
+        // 2. İADE İŞLEMLERİ (PUSH)
+        // ----------------------------------------------------
+        function iadeEt(id, ad, stok) {
+            document.getElementById('iadeUrunId').value = id;
+            document.getElementById('iadeUrunAdi').innerText = ad;
+            document.getElementById('iadeMaxStok').innerText = stok;
+            document.getElementById('iadeMiktar').max = stok;
+            document.getElementById('iadeMiktar').value = 1;
 
-            // 3. Transfer İsteği At (API)
-            fetch(`/Envanter/UrunTransferEt?urunId=${urunId}&hedefTarlaId=${hedefTarlaId}`, {
-                method: 'POST'
-            })
+            var iadeModal = new bootstrap.Modal(document.getElementById('iadeModal'));
+            iadeModal.show();
+        }
+
+        function iadeyiTamamla() {
+            var urunId = document.getElementById('iadeUrunId').value;
+            var miktar = document.getElementById('iadeMiktar').value;
+            var max = parseInt(document.getElementById('iadeMiktar').max);
+
+            if(miktar > max || miktar < 1) { alert("Geçersiz miktar!"); return; }
+
+            // Hedef Tarla ID = 0 (Merkez Depo)
+            apiTransfer(urunId, 0, miktar);
+        }
+
+        // ----------------------------------------------------
+        // 3. TÜKETİM İŞLEMLERİ (CONSUME)
+        // ----------------------------------------------------
+        function tuketimModalAc(id, ad, stok) {
+            document.getElementById('tuketimUrunId').value = id;
+            document.getElementById('tuketimUrunAdi').innerText = ad;
+            document.getElementById('tuketimMaxStok').innerText = stok;
+            document.getElementById('tuketimMiktar').max = stok;
+            document.getElementById('tuketimMiktar').value = 1;
+
+            var modal = new bootstrap.Modal(document.getElementById('tuketimModal'));
+            modal.show();
+        }
+
+        function tuketimiTamamla() {
+            var urunId = document.getElementById('tuketimUrunId').value;
+            var miktar = parseInt(document.getElementById('tuketimMiktar').value);
+            var max = parseInt(document.getElementById('tuketimMaxStok').innerText);
+
+            if (miktar <= 0 || miktar > max) { alert("Geçersiz miktar!"); return; }
+
+            fetch(`/Envanter/UrunTuket?urunId=${urunId}&miktar=${miktar}`, { method: 'POST' })
             .then(res => {
-                if (res.ok) {
-                    // Başarılı
-                    location.reload();
-                } else {
-                    alert("Transfer sırasında hata oluştu. Lütfen tekrar deneyin.");
-                    btn.disabled = false;
-                    btn.innerHTML = eskiHtml;
-                }
-            })
-            .catch(err => {
-                 alert("Sunucu hatası!");
-                 btn.disabled = false;
-                 btn.innerHTML = eskiHtml;
+                if(res.ok) { location.reload(); }
+                else { alert("İşlem başarısız! Stok hatası olabilir."); }
+            });
+        }
+
+        // ----------------------------------------------------
+        // ORTAK YARDIMCI
+        // ----------------------------------------------------
+        function apiTransfer(uId, tId, miktar) {
+            fetch(`/Envanter/UrunTransferEt?urunId=${uId}&hedefTarlaId=${tId}&miktar=${miktar}`, { method: 'POST' })
+            .then(res => {
+                if(res.ok) { location.reload(); }
+                else { alert("İşlem başarısız! Yetersiz stok veya sunucu hatası."); }
             });
         }
     </script>

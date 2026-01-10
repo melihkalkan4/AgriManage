@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -16,34 +17,30 @@ namespace AgriManage.WebApp.Services
 
         public string TokenOlustur(string kullaniciAdi, string rol, string userId)
         {
-            // 1. Ayarları Oku
-            var secretKey = _configuration["JwtSettings:SecretKey"];
-            var issuer = _configuration["JwtSettings:Issuer"];
-            var audience = _configuration["JwtSettings:Audience"];
+            // Null check ekleyerek hataları önlüyoruz
+            if (string.IsNullOrEmpty(kullaniciAdi)) kullaniciAdi = "Unknown";
+            if (string.IsNullOrEmpty(rol)) rol = "User";
+            if (string.IsNullOrEmpty(userId)) userId = "0";
 
-            // 2. Pasaportun İçine Yazılacak Bilgiler (Claims)
-            var claims = new List<Claim>
+            var tokenHandler = new JwtSecurityTokenHandler();
+            // appsettings.json'dan okuyamazsa varsayılan bir key kullanır (Güvenlik için)
+            var secretKey = _configuration["JwtSettings:SecretKey"] ?? "AgriManage_Projesi_Icin_Cok_Gizli_Anahtar_2025";
+            var key = Encoding.ASCII.GetBytes(secretKey);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
             {
-                new Claim(ClaimTypes.Name, kullaniciAdi),     // Adı ne?
-                new Claim(ClaimTypes.Role, rol),              // Rolü ne? (Admin/Çiftçi)
-                new Claim("UserId", userId),                  // ID'si ne?
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) // Benzersiz Kod
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim(ClaimTypes.Name, kullaniciAdi),
+                    new Claim(ClaimTypes.Role, rol),
+                    new Claim(ClaimTypes.NameIdentifier, userId)
+                }),
+                Expires = DateTime.UtcNow.AddHours(1),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
-            // 3. Şifreleme Anahtarı
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            // 4. Token'ı Oluştur (Süresi 1 Saat)
-            var token = new JwtSecurityToken(
-                issuer: issuer,
-                audience: audience,
-                claims: claims,
-                expires: DateTime.Now.AddHours(1), // Kart 1 saat geçerli
-                signingCredentials: credentials);
-
-            // 5. String olarak geri döndür
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
         }
     }
 }

@@ -1,0 +1,65 @@
+﻿@model List<AgriManage.WebApp.DTOs.SeraDto>
+
+@{
+    ViewData["Title"] = "Seralarım";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-success"><i class="fa-solid fa-plant-wilt me-2"></i>Sera Yönetimi</h2>
+            <p class="text-muted mb-0">Seralarınızı izleyin, hasat girin ve stok takibi yapın.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-success shadow-sm">
+            <i class="fa-solid fa-plus me-2"></i> Yeni Sera Kur
+        </a>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-light border text-center py-5 shadow-sm">
+            <i class="fa-solid fa-seedling fa-3x text-success opacity-50 mb-3"></i>
+            <h4>Henüz hiç seranız yok.</h4>
+            <p class="text-muted">Yukarıdaki "Yeni Sera Kur" butonu ile başlayın.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var item in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card shadow-sm border-0 h-100 hover-effect">
+                        <div class="card-header bg-white border-0 pt-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="card-title fw-bold text-dark mb-0">@item.Ad</h5>
+                                <span class="badge bg-light text-dark border">@item.Tip</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-2"><i class="fa-solid fa-location-dot me-1"></i> @item.Konum</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-success">@item.Buyukluk m²</span>
+                                @if (item.IsitmaVarMi)
+                                {
+                                    <i class="fa-solid fa-temperature-arrow-up text-danger" title="Isıtmalı"></i>
+                                }
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white border-0 pb-3">
+                            <div class="d-grid gap-2">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary btn-sm">
+                                    <i class="fa-solid fa-chart-pie me-1"></i> Detay & Hasat
+                                </a>
+
+                                <a asp-controller="Envanter" asp-action="Index" asp-route-tarlaId="@item.Id" class="btn btn-outline-success btn-sm fw-bold">
+                                    <i class="fa-solid fa-boxes-stacked me-1"></i> Stok / Envanter
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
