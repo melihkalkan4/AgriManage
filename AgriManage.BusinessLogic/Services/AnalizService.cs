@@ -1,6 +1,7 @@
-﻿using AgriManage.DataAccess.Data;
-using AgriManage.DataAccess.Models;
+﻿using AgriManage.BusinessLogic.Dtos;
+using AgriManage.DataAccess.Data;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -15,61 +16,46 @@ namespace AgriManage.BusinessLogic.Services
             _context = context;
         }
 
-        public AnalizViewModel GetGenelAnaliz(string userId)
+        // ... Diğer metodlar aynen kalabilir ...
+        public int GetToplamPersonel() => _context.Personeller.Count();
+        public int GetAktifGorevSayisi() => _context.Gorevler.Count(g => g.GorevDurumuId != 3);
+        public double GetToplamArazi() => (double)(_context.Tarlalar.Sum(t => (decimal?)t.AlanDonum) ?? 0);
+        public int GetBugunkuVardiyaSayisi() => _context.PersonelVardiyalari.Count(v => v.Tarih.Date == DateTime.Today);
+        public Dictionary<string, double> GetTarlaDagilimi() => new Dictionary<string, double>();
+        public Dictionary<string, decimal> GetAylikGiderler() => new Dictionary<string, decimal>();
+
+        // 🔥 GÜNCELLENEN METOD 🔥
+        public AnalizDto GetDetayliAnaliz()
         {
-            var model = new AnalizViewModel();
+            var dto = new AnalizDto();
 
-            // 1. MEVCUT: EKİM VE ÜRÜN ANALİZİ
-            var ekimler = _context.EkimPlanlari
-                .Include(e => e.Tarla)
-                .Include(e => e.Urun)
-                .Include(e => e.Sezon)
-                .Where(e => e.Tarla.ApplicationUserId == userId)
-                .OrderByDescending(e => e.EkimTarihi)
-                .ToList();
+            // 1. ÖZET VERİLER
+            dto.ToplamPersonel = _context.Personeller.Count();
+            dto.AktifGorevSayisi = _context.Gorevler.Count(g => g.GorevDurumuId != 3);
+            dto.ToplamArazi = (double)(_context.Tarlalar.Sum(t => (decimal?)t.AlanDonum) ?? 0);
+            dto.BugunkuVardiya = _context.PersonelVardiyalari.Count(v => v.Tarih.Date == DateTime.Today);
 
-            model.AktifEkimler = ekimler;
+            // 2. ANA SAYFA TABLOSU İÇİN TARLA LİSTESİ (BUNU EKLEDİK)
+            var tarlalar = _context.Tarlalar.OrderByDescending(t => t.Id).Take(5).ToList();
+            dto.TarlaIsimleri = tarlalar.Select(t => t.Ad).ToList();
+            dto.TarlaAlanlari = tarlalar.Select(t => (double)t.AlanDonum).ToList();
 
-            if (ekimler.Any())
-            {
-                var aktifOlanlar = ekimler.Where(x => x.HasatTarihi == null).ToList();
-                model.ToplamEkiliAlan = (int)aktifOlanlar.Sum(e => e.Tarla.AlanDonum);
-                model.BeklenenHasatMiktari = aktifOlanlar.Sum(e => e.BeklenenVerimKg);
-                model.AktifSezonSayisi = ekimler.Select(e => e.SezonId).Distinct().Count();
+            // 3. SİMÜLASYON VERİLERİ (Grafikler için)
+            dto.Aylar = new List<string> { "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran" };
+            dto.Gelirler = new List<decimal> { 45000, 52000, 38000, 75000, 92000, 85000 };
+            dto.Giderler = new List<decimal> { 32000, 35000, 41000, 40000, 55000, 48000 };
 
-                var urunGruplari = aktifOlanlar
-                    .GroupBy(e => e.Urun.Ad)
-                    .Select(g => new { UrunAdi = g.Key, ToplamAlan = g.Sum(x => x.Tarla.AlanDonum) })
-                    .ToList();
+            dto.UrunAdlari = new List<string> { "Buğday", "Mısır", "Ayçiçeği", "Arpa", "Yonca" };
+            dto.BeklenenHasatTon = new List<double> { 150, 120, 80, 95, 200 };
 
-                model.UrunAdlari = urunGruplari.Select(x => x.UrunAdi).ToList();
-                model.UrunAlanlari = urunGruplari.Select(x => x.ToplamAlan).ToList();
-            }
+            dto.GiderKalemleri = new List<string> { "Gübre", "Mazot", "Tohum", "İşçilik", "Bakım" };
+            dto.GiderTutarlari = new List<decimal> { 55000, 85000, 42000, 60000, 25000 };
 
-            // --- YENİ 1: EKİPMAN SAĞLIK DURUMU ANALİZİ ---
-            // Tüm ekipmanları duruma göre grupla (Aktif, Arızalı, Bakımda)
-            var ekipmanGruplari = _context.Ekipmanlar
-                .Include(e => e.EkipmanDurumu)
-                .GroupBy(e => e.EkipmanDurumu.Ad)
-                .Select(g => new { Durum = g.Key, Sayi = g.Count() })
-                .ToList();
+            var personeller = _context.Personeller.Include(p => p.ApplicationUser).Take(5).ToList();
+            dto.PersonelAdlari = personeller.Select(p => p.ApplicationUser?.TamAd ?? "İsimsiz").ToList();
+            dto.TamamlananGorevler = new List<int> { 15, 12, 18, 9, 22 };
 
-            model.EkipmanDurumAdlari = ekipmanGruplari.Select(x => x.Durum).ToList();
-            model.EkipmanDurumSayilari = ekipmanGruplari.Select(x => x.Sayi).ToList();
-
-
-            // --- YENİ 2: DEPARTMAN PERSONEL ANALİZİ ---
-            // Personelleri departmanlarına göre grupla
-            var personelGruplari = _context.Personeller
-                .Include(p => p.Pozisyon).ThenInclude(pos => pos.Departman)
-                .GroupBy(p => p.Pozisyon.Departman.Ad)
-                .Select(g => new { Departman = g.Key, Sayi = g.Count() })
-                .ToList();
-
-            model.DepartmanAdlari = personelGruplari.Select(x => x.Departman).ToList();
-            model.DepartmanPersonelSayilari = personelGruplari.Select(x => x.Sayi).ToList();
-
-            return model;
+            return dto;
         }
     }
 }

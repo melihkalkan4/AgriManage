@@ -1,44 +1,44 @@
+using AgriManage.BusinessLogic.Services; // Servisi kullanmak için
+using AgriManage.WebApp.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using AgriManage.BusinessLogic.Services; // Servisleri kullanýyoruz
+using System.Diagnostics;
 
 namespace AgriManage.WebApp.Controllers
 {
-    [Authorize]
     public class HomeController : Controller
     {
-        private readonly IDashboardService _dashboardService;
-        private readonly IAnalizService _analizService; // Daha önce eklemiþtik
+        private readonly ILogger<HomeController> _logger;
+        private readonly IAnalizService _analizService; // Servis Tanýmý
 
-        // Constructor Injection ile servisleri alýyoruz
-        public HomeController(IDashboardService dashboardService, IAnalizService analizService)
+        // Dependency Injection ile servisi içeri alýyoruz
+        public HomeController(ILogger<HomeController> logger, IAnalizService analizService)
         {
-            _dashboardService = dashboardService;
+            _logger = logger;
             _analizService = analizService;
         }
 
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            bool isAdmin = User.IsInRole("Admin");
+            // Eðer kullanýcý giriþ yapmamýþsa, verileri çekmeye çalýþma, sadece sayfayý göster
+            if (!User.Identity.IsAuthenticated)
+            {
+                return View();
+            }
 
-            // TÜM ÝÞ MANTIÐI ARTIK SERVÝSTE
-            var model = await _dashboardService.GetDashboardDataAsync(userId, isAdmin);
-
-            return View(model);
-        }
-
-        public IActionResult Analiz()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var model = _analizService.GetGenelAnaliz(userId);
+            // Giriþ yapmýþsa servisten DTO verisini çek
+            var model = _analizService.GetDetayliAnaliz();
             return View(model);
         }
 
         public IActionResult Privacy()
         {
             return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }

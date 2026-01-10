@@ -17,23 +17,26 @@
     <link rel="stylesheet" href="~/AgriManage.styles.css" asp-append-version="true" />
 
     <style>
-        @@media all and (min-width: 992px) {
-            .navbar .nav-item:hover > .dropdown-menu {
+        @media all and (min-width: 992px) {
+            .navbar .nav-item:hover > .dropdown-menu
+
+        {
+            display: block;
+            margin-top: 0;
+        }
+
+        .dropdown-menu .dropend {
+            position: relative;
+        }
+
+            .dropdown-menu .dropend:hover > .dropdown-menu {
                 display: block;
-                margin-top: 0;
+                position: absolute;
+                top: 0;
+                left: 100%;
+                margin-top: -5px;
             }
 
-            .dropdown-menu .dropend {
-                position: relative;
-            }
-
-                .dropdown-menu .dropend:hover > .dropdown-menu {
-                    display: block;
-                    position: absolute;
-                    top: 0;
-                    left: 100%;
-                    margin-top: -5px;
-                }
         }
 
         .navbar-brand {
@@ -155,10 +158,8 @@
                                                 </li>
                                                 <li><a class="dropdown-item" asp-controller="Talep" asp-action="Index">Satın Alma Talepleri</a></li>
 
-                                                @if (User.IsInRole("Admin") || User.IsInRole("SatinAlimGorevlisi"))
-                                                {
-                                                    <li><a class="dropdown-item" asp-controller="Tedarikci" asp-action="Index">Tedarikçiler</a></li>
-                                                }
+                                                @* TEDARİKÇİLER LİNKİ BURADAN KALDIRILDI *@
+
                                             </ul>
                                         </li>
                                     }

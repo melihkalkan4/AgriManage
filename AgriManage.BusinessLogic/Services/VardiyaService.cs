@@ -24,19 +24,29 @@ namespace AgriManage.BusinessLogic.Services
             _context.SaveChanges();
         }
 
-        public void VardiyaAta(int personelId, int vardiyaId, DayOfWeek gun)
+        // DÜZELTME 1: Parametre olarak 'DayOfWeek gun' yerine 'DateTime tarih' alıyoruz.
+        public void VardiyaAta(int personelId, int vardiyaId, DateTime tarih)
         {
+            // Veritabanında aynı gün kayıt var mı kontrol ediyoruz (.Date kullanarak saat farkını yok sayıyoruz)
             var mevcut = _context.PersonelVardiyalari
-                .FirstOrDefault(p => p.PersonelId == personelId && p.Gun == gun);
+                .FirstOrDefault(p => p.PersonelId == personelId && p.Tarih.Date == tarih.Date);
 
             if (mevcut != null)
             {
+                // Varsa güncelle
                 mevcut.VardiyaId = vardiyaId;
                 _context.PersonelVardiyalari.Update(mevcut);
             }
             else
             {
-                var atama = new PersonelVardiya { PersonelId = personelId, VardiyaId = vardiyaId, Gun = gun };
+                // Yoksa yeni ekle
+                // DÜZELTME 2: 'Gun' yerine 'Tarih' özelliğini kullanıyoruz.
+                var atama = new PersonelVardiya
+                {
+                    PersonelId = personelId,
+                    VardiyaId = vardiyaId,
+                    Tarih = tarih
+                };
                 _context.PersonelVardiyalari.Add(atama);
             }
             _context.SaveChanges();
@@ -48,8 +58,9 @@ namespace AgriManage.BusinessLogic.Services
                 .Include(pv => pv.Vardiya)
                 .Include(pv => pv.Personel)
                     .ThenInclude(p => p.ApplicationUser)
-                .OrderBy(pv => pv.Personel.ApplicationUser.TamAd)
-                .ThenBy(pv => pv.Gun)
+                // DÜZELTME 3: Sıralamayı Tarih'e göre yapıyoruz
+                .OrderByDescending(pv => pv.Tarih)
+                .ThenBy(pv => pv.Personel.ApplicationUser.TamAd)
                 .ToList();
         }
 

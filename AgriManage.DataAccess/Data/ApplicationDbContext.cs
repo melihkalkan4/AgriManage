@@ -70,6 +70,7 @@ namespace AgriManage.DataAccess.Data
         public DbSet<OperasyonelRapor> OperasyonelRaporlar { get; set; }
 
 
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
 

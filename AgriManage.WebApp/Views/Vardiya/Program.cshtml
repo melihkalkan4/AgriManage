@@ -30,7 +30,7 @@
                             <span class="text-muted small">#@item.Personel?.SicilNo</span>
                             <strong>@item.Personel?.ApplicationUser?.TamAd</strong>
                         </td>
-                        <td>@item.Gun</td>
+                        <td>@item.Tarih.ToShortDateString()</td>
                         <td><span class="badge bg-info text-dark">@item.Vardiya?.Ad</span></td>
                         <td>@item.Vardiya?.BaslangicSaati.ToString(@"hh\:mm") - @item.Vardiya?.BitisSaati.ToString(@"hh\:mm")</td>
                     </tr>
