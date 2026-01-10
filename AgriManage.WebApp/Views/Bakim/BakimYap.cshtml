@@ -7,28 +7,42 @@
 <div class="container mt-4">
     <div class="card shadow border-0 col-md-8 mx-auto">
         <div class="card-header bg-warning text-dark">
-            <h5 class="mb-0">Bakım Kaydı Gir</h5>
+            <h5 class="mb-0 fw-bold">Bakım Kaydı Gir</h5>
         </div>
         <div class="card-body">
+            @* Bilgilendirme Mesajı *@
             <div class="alert alert-secondary">
+                <i class="fa-solid fa-info-circle me-2"></i>
                 <strong>@ViewBag.PlanBilgisi</strong> işlemi için kayıt giriyorsunuz.
             </div>
-            <form asp-action="BakimYap">
+
+            @* DÜZELTME: method="post" eklendi *@
+            <form asp-action="BakimYap" method="post">
+
+                @* HATA GÖSTERİCİ: Kayıt olmazsa nedenini burada yazar *@
+                <div asp-validation-summary="All" class="text-danger mb-3 font-weight-bold"></div>
+
+                @* ID KAYBOLMASIN DİYE GİZLİ INPUT *@
                 <input type="hidden" asp-for="BakimPlaniId" />
 
                 <div class="mb-3">
                     <label class="form-label fw-bold">İşlem Tarihi</label>
-                    <input asp-for="Tarih" type="datetime-local" class="form-control" />
+                    <input asp-for="Tarih" type="datetime-local" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
                 </div>
+
                 <div class="mb-3">
                     <label class="form-label fw-bold">Maliyet (TL)</label>
-                    <input asp-for="Maliyet" type="number" step="0.01" class="form-control" />
+                    <input asp-for="Maliyet" type="number" step="0.01" class="form-control" placeholder="0.00" />
                 </div>
+
                 <div class="mb-3">
-                    <label class="form-label">Açıklama</label>
-                    <textarea asp-for="Aciklama" class="form-control" rows="3"></textarea>
+                    <label class="form-label fw-bold">Açıklama</label>
+                    <textarea asp-for="Aciklama" class="form-control" rows="3" placeholder="Yapılan işlemleri yazınız..."></textarea>
                 </div>
-                <button type="submit" class="btn btn-warning w-100">Kaydet</button>
+
+                <button type="submit" class="btn btn-warning w-100 fw-bold">
+                    <i class="fa-solid fa-save me-2"></i>Kaydet
+                </button>
             </form>
         </div>
     </div>

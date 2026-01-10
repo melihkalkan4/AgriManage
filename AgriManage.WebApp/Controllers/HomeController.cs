@@ -1,44 +1,32 @@
+using AgriManage.BusinessLogic.Dtos;
+using AgriManage.BusinessLogic.Services; // Data deðil, Service namespace'i
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using AgriManage.BusinessLogic.Services; // Servisleri kullanýyoruz
 
 namespace AgriManage.WebApp.Controllers
 {
-    [Authorize]
     public class HomeController : Controller
     {
-        private readonly IDashboardService _dashboardService;
-        private readonly IAnalizService _analizService; // Daha önce eklemiþtik
+        private readonly IAnalizService _analizService;
 
-        // Constructor Injection ile servisleri alýyoruz
-        public HomeController(IDashboardService dashboardService, IAnalizService analizService)
+        // Servisi enjekte ediyoruz
+        public HomeController(IAnalizService analizService)
         {
-            _dashboardService = dashboardService;
             _analizService = analizService;
         }
 
-        public async Task<IActionResult> Index()
+        public IActionResult Index()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            bool isAdmin = User.IsInRole("Admin");
+            // Kullanýcý giriþ yapmamýþsa direkt View döndür (Login butonlarýný görsün)
+            if (User?.Identity?.IsAuthenticated != true)
+            {
+                return View();
+            }
 
-            // TÜM ÝÞ MANTIÐI ARTIK SERVÝSTE
-            var model = await _dashboardService.GetDashboardDataAsync(userId, isAdmin);
+            // Kullanýcý giriþ yapmýþsa verileri Servis'ten çek
+            // AnalizController'da kullanýlan metodun aynýsýný burada da kullanýyoruz!
+            var model = _analizService.GetDetayliAnaliz();
 
             return View(model);
-        }
-
-        public IActionResult Analiz()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var model = _analizService.GetGenelAnaliz(userId);
-            return View(model);
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
         }
     }
 }

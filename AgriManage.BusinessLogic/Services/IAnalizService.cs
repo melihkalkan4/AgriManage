@@ -1,10 +1,9 @@
-﻿using AgriManage.DataAccess.Models;
+﻿using AgriManage.BusinessLogic.Dtos;
 
 namespace AgriManage.BusinessLogic.Services
 {
     public interface IAnalizService
     {
-        // Kullanıcı ID'sine göre tüm analiz verisini tek pakette (ViewModel) döner
-        AnalizViewModel GetGenelAnaliz(string userId);
+        AnalizDto GetDetayliAnaliz();
     }
 }

@@ -1,5 +1,5 @@
 ﻿using AgriManage.DataAccess.Models;
-using System;
+using System; // DateTime kullanabilmek için bunu eklemeyi unutma
 using System.Collections.Generic;
 
 namespace AgriManage.BusinessLogic.Services
@@ -8,7 +8,12 @@ namespace AgriManage.BusinessLogic.Services
     {
         List<Vardiya> GetVardiyaTanimlari();
         void CreateVardiyaTanim(Vardiya vardiya);
-        void VardiyaAta(int personelId, int vardiyaId, DayOfWeek gun);
+
+        // 👇 DÜZELTİLMESİ GEREKEN SATIR BURASI 👇
+        // Eski Hali: void VardiyaAta(int personelId, int vardiyaId, DayOfWeek gun);
+        // Yeni Hali:
+        void VardiyaAta(int personelId, int vardiyaId, DateTime tarih);
+
         List<PersonelVardiya> TumProgramiGetir();
         List<Personel> GetAllPersoneller();
     }

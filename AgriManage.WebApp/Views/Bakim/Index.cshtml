@@ -3,13 +3,21 @@
 @{
     ViewData["Title"] = "Bakım Yönetimi";
     bool isAdmin = User.IsInRole("Admin");
+
+    // Controller'dan gelen "Yapılmış İşler" listesini güvenli şekilde alıyoruz
+    var gecmisIslemler = ViewBag.GecmisIslemler as IEnumerable<AgriManage.DataAccess.Models.BakimKaydi>;
 }
 
 <div class="container mt-4">
+
+    @* ========================================== *@
+    @* 1. BÖLÜM: GELECEK / PLANLANAN BAKIMLAR     *@
+    @* ========================================== *@
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h3 class="fw-bold text-secondary"><i class="fa-solid fa-screwdriver-wrench me-2"></i>Bakım Takvimi</h3>
-            <p class="text-muted mb-0">Planlanan bakım tarihleri ve durumları.</p>
+            <h3 class="fw-bold text-secondary"><i class="fa-solid fa-calendar-days me-2"></i>Bakım Takvimi</h3>
+            <p class="text-muted mb-0">Planlanan bakım tarihleri ve aciliyet durumları.</p>
         </div>
 
         @if (isAdmin)
@@ -20,14 +28,14 @@
         }
     </div>
 
-    <div class="card shadow border-0">
+    <div class="card shadow border-0 mb-5">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
+                        <th>Tarih</th>
                         <th>Ekipman</th>
                         <th>Bakım Tipi</th>
-                        <th>Planlanan Tarih</th>
                         <th>Durum</th>
                         <th class="text-end">İşlem</th>
                     </tr>
@@ -35,38 +43,106 @@
                 <tbody>
                     @if (!Model.Any())
                     {
-                        <tr><td colspan="5" class="text-center py-4 text-muted">Henüz bakım planı yok.</td></tr>
+                        <tr><td colspan="5" class="text-center py-4 text-muted">Henüz planlanmış bir bakım yok.</td></tr>
                     }
                     @foreach (var item in Model)
                     {
-                        // MANTIK DEĞİŞTİ: Bugünün tarihi, planlanan tarihi geçti mi?
-                        bool bakimGeldi = DateTime.Now >= item.PlanlananTarih;
-                        string durumClass = bakimGeldi ? "text-danger fw-bold" : "text-success";
+                        // MANTIK: Bugünün tarihi, planlanan tarihi geçti mi?
+                        bool gecikmis = item.PlanlananTarih < DateTime.Today;
+                        string rowClass = gecikmis ? "table-danger" : "";
 
-                        <tr>
-                            <td class="fw-bold">@(item.Ekipman?.Ad ?? "-")</td>
+                        <tr class="@rowClass">
+                            <td class="fw-bold">
+                                @item.PlanlananTarih.ToString("dd.MM.yyyy")
+                            </td>
+                            <td>@(item.Ekipman?.Ad ?? "-")</td>
                             <td><span class="badge bg-info text-dark">@(item.BakimTipi?.Ad ?? "-")</span></td>
-
-                            <td>@item.PlanlananTarih.ToString("dd.MM.yyyy")</td>
-
-                            <td class="@durumClass">
-                                @if (bakimGeldi)
+                            <td>
+                                @if (gecikmis)
                                 {
-                                    <span><i class="fa-solid fa-triangle-exclamation"></i> Bakım Zamanı Geldi!</span>
+                                    <span class="text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation"></i> Gecikti!</span>
                                 }
                                 else
                                 {
-
-                                    <span><i class="fa-solid fa-clock"></i> Zamanı Var</span>
+                                    <span class="text-success"><i class="fa-solid fa-clock"></i> Zamanı Var</span>
                                 }
                             </td>
                             <td class="text-end">
-                                <a asp-action="BakimYap" asp-route-planId="@item.Id" class="btn btn-sm btn-outline-primary">Bakımı İşle</a>
+                                <a asp-action="BakimYap" asp-route-planId="@item.Id" class="btn btn-sm btn-outline-success">
+                                    <i class="fa-solid fa-check me-1"></i>Bakımı İşle
+                                </a>
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    @* ========================================== *@
+    @* 2. BÖLÜM: TAMAMLANAN / GEÇMİŞ İŞLEMLER     *@
+    @* ========================================== *@
+
+    <div class="d-flex align-items-center mb-3">
+        <h4 class="fw-bold text-secondary"><i class="fa-solid fa-history me-2"></i>Tamamlanan Bakım Geçmişi</h4>
+    </div>
+
+    <div class="card shadow border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0">
+                    <thead class="bg-secondary text-white">
+                        <tr>
+                            <th>İşlem Tarihi</th>
+                            <th>Ekipman</th>
+                            <th>Yapılan İşlem</th>
+                            <th>Yapan Personel</th>
+                            <th>Maliyet</th>
+                            <th>Açıklama</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (gecmisIslemler == null || !gecmisIslemler.Any())
+                        {
+                            <tr><td colspan="6" class="text-center py-3 text-muted">Henüz yapılmış bir bakım kaydı bulunmuyor.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var kayit in gecmisIslemler)
+                            {
+                                <tr>
+                                    <td>@kayit.Tarih.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td class="fw-bold">@kayit.BakimPlani?.Ekipman?.Ad</td>
+                                    <td>@kayit.BakimPlani?.BakimTipi?.Ad</td>
+                                    <td>
+                                        @* --- HATA ÇÖZÜMÜ BURADA --- *@
+                                        @* Personel tablosundan -> ApplicationUser tablosuna geçip TamAd alıyoruz *@
+                                        @if (kayit.Personel != null && kayit.Personel.ApplicationUser != null)
+                                        {
+                                            <span class="text-dark fw-bold">@kayit.Personel.ApplicationUser.TamAd</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted fst-italic">Sistem/Admin</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (kayit.Maliyet > 0)
+                                        {
+                                            <span class="text-success fw-bold">@kayit.Maliyet.ToString("C2")</span>
+                                        }
+                                        else
+                                        {
+                                            <span>-</span>
+                                        }
+                                    </td>
+                                    <td class="small text-muted">@kayit.Aciklama</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

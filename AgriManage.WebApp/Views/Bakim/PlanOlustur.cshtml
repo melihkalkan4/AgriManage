@@ -10,7 +10,12 @@
             <h5 class="mb-0">Periyodik Bakım Planla (Tarih Bazlı)</h5>
         </div>
         <div class="card-body">
-            <form asp-action="PlanOlustur">
+            @* method="post" eklendi *@
+            <form asp-action="PlanOlustur" method="post">
+
+                @* HATA GÖSTERİCİ: Eğer yine kaydetmezse sebebini burada kırmızı yazıyla göreceksin *@
+                <div asp-validation-summary="All" class="text-danger mb-3"></div>
+
                 <div class="mb-3">
                     <label class="form-label fw-bold">Ekipman Seçimi</label>
                     <select asp-for="EkipmanId" class="form-select" asp-items="ViewBag.EkipmanId"></select>
@@ -22,6 +27,7 @@
 
                 <div class="mb-3">
                     <label asp-for="PlanlananTarih" class="form-label fw-bold">Planlanan Bakım Tarihi</label>
+                    @* Tarih formatı sorunu olmaması için *@
                     <input asp-for="PlanlananTarih" type="date" class="form-control" />
                 </div>
 

@@ -1,11 +1,19 @@
-﻿@model AgriManage.Models.DashboardViewModel
+﻿@using AgriManage.BusinessLogic.Dtos
+@using System.Text.Json
+@model AnalizDto
 
 @{
-    ViewData["Title"] = "Ana Sayfa";
-    bool isAdmin = User.IsInRole("Admin");
+    ViewData["Title"] = "Genel Bakış";
+
+    // Null check mekanizması:
+    var isAuth = User?.Identity?.IsAuthenticated == true;
+
+    // Model null gelirse hata vermemesi için boş bir nesne oluşturuyoruz.
+    // AnalizDto'nun constructor'ında listeleri (new List<string>() vb.) tanımladığından emin ol.
+    var m = Model ?? new AnalizDto();
 }
 
-@if (!User.Identity.IsAuthenticated)
+@if (!isAuth)
 {
     <div class="text-center mt-5">
         <div class="p-5 mb-4 bg-light rounded-3 shadow-sm">
@@ -20,142 +28,292 @@
 }
 else
 {
-    <div class="container mt-4">
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card text-white bg-primary mb-3 shadow border-0" style="background: linear-gradient(45deg, #0d6efd, #0a58ca);">
-                    <div class="card-body text-center p-3">
-                        <h6 class="card-title text-white-50"><i class="fa-solid fa-wheat-awn"></i> Toplam Tarla</h6>
-                        <h2 class="fw-bold">@Model.Tarlalar.Count</h2>
+    <div class="container-fluid py-4">
+
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-sm-6">
+                <div class="card shadow-sm border-0 border-start border-4 border-primary h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-muted mb-1 small text-uppercase fw-bold">Toplam Personel</p>
+                                <h4 class="mb-0 fw-bold text-dark">@m.ToplamPersonel</h4>
+                            </div>
+                            <div class="icon-shape bg-primary bg-opacity-10 text-primary p-3 rounded">
+                                <i class="fa-solid fa-users fs-4"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-3">
-                <div class="card text-white bg-success mb-3 shadow border-0" style="background: linear-gradient(45deg, #198754, #146c43);">
-                    <div class="card-body text-center p-3">
-                        <h6 class="card-title text-white-50"><i class="fa-solid fa-ruler-combined"></i> Toplam Arazi (Dönüm)</h6>
-                        <h2 class="fw-bold">@Model.Tarlalar.Sum(t => t.AlanDonum).ToString("0.##")</h2>
+            <div class="col-xl-3 col-sm-6">
+                <div class="card shadow-sm border-0 border-start border-4 border-success h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-muted mb-1 small text-uppercase fw-bold">Toplam Arazi</p>
+                                <h4 class="mb-0 fw-bold text-dark">@m.ToplamArazi <small class="text-muted fs-6">dönüm</small></h4>
+                            </div>
+                            <div class="icon-shape bg-success bg-opacity-10 text-success p-3 rounded">
+                                <i class="fa-solid fa-ruler-combined fs-4"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-3">
-                <div class="card text-white bg-info mb-3 shadow border-0" style="background: linear-gradient(45deg, #0dcaf0, #0bacbe);">
-                    <div class="card-body text-center p-3">
-                        <h6 class="card-title text-white-50">
-                            @(isAdmin? Html.Raw("<i class='fa-solid fa-users'></i> Aktif Personel") : Html.Raw("<i class='fa-solid fa-clipboard-list'></i> Aktif Görevlerim"))
-                        </h6>
-                        <h2 class="fw-bold">
-                            @(isAdmin? Model.Personeller.Count : Model.AktifGorevSayisi)
-                        </h2>
+            <div class="col-xl-3 col-sm-6">
+                <div class="card shadow-sm border-0 border-start border-4 border-info h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-muted mb-1 small text-uppercase fw-bold">Aktif Görevler</p>
+                                <h4 class="mb-0 fw-bold text-dark">@m.AktifGorevSayisi</h4>
+                            </div>
+                            <div class="icon-shape bg-info bg-opacity-10 text-info p-3 rounded">
+                                <i class="fa-solid fa-clipboard-list fs-4"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-3">
-                <div class="card text-white bg-warning mb-3 shadow border-0" style="background: linear-gradient(45deg, #ffc107, #d39e00);">
-                    <div class="card-body text-center p-3">
-                        <h6 class="card-title text-white-50"><i class="fa-solid fa-triangle-exclamation"></i> Arızalı Ekipman</h6>
-                        <h2 class="fw-bold">@Model.ArizaliEkipmanSayisi</h2>
+            <div class="col-xl-3 col-sm-6">
+                <div class="card shadow-sm border-0 border-start border-4 border-warning h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-muted mb-1 small text-uppercase fw-bold">Bugün Çalışan</p>
+                                <h4 class="mb-0 fw-bold text-dark">@m.BugunkuVardiya</h4>
+                            </div>
+                            <div class="icon-shape bg-warning bg-opacity-10 text-warning p-3 rounded">
+                                <i class="fa-solid fa-clock fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 fw-bold text-dark"><i class="fa-solid fa-list text-success me-2"></i>Arazi Listesi</h6>
+                        <a asp-controller="Tarla" asp-action="Index" class="btn btn-sm btn-outline-secondary">Tümü</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="tblTarlalar" class="table table-hover align-middle mb-0" style="width:100%">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Tarla Adı</th>
+                                        <th class="text-end">Büyüklük (Dönüm)</th>
+                                        <th class="text-center">Durum</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        var isimler = m.TarlaIsimleri ?? new List<string>();
+                                        var alanlar = m.TarlaAlanlari ?? new List<double>();
+                                        var count = Math.Min(isimler.Count, alanlar.Count);
+                                    }
+
+                                    @if (count == 0)
+                                    {
+                                        <tr><td colspan="3" class="text-center text-muted">Kayıt yok</td></tr>
+                                    }
+                                    else
+                                    {
+                                        for (int i = 0; i < count; i++)
+                                        {
+                                            <tr>
+                                                <td class="fw-bold text-secondary">@isimler[i]</td>
+                                                <td class="text-end">@alanlar[i]</td>
+                                                <td class="text-center">
+                                                    <span class="badge bg-success bg-opacity-10 text-success px-3">Aktif</span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 fw-bold text-dark"><i class="fa-solid fa-user-group text-primary me-2"></i>Personel Durumu</h6>
+                        <a asp-controller="Personel" asp-action="Index" class="btn btn-sm btn-outline-secondary">Tümü</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="tblPersonel" class="table table-hover align-middle mb-0" style="width:100%">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Personel Adı</th>
+                                        <th class="text-center">Bitirilen Görev</th>
+                                        <th class="text-end">Performans</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        var pAd = m.PersonelAdlari ?? new List<string>();
+                                        var pGorev = m.TamamlananGorevler ?? new List<int>();
+                                        var pCount = Math.Min(pAd.Count, pGorev.Count);
+                                    }
+
+                                    @if (pCount == 0)
+                                    {
+                                        <tr><td colspan="3" class="text-center text-muted">Kayıt yok</td></tr>
+                                    }
+                                    else
+                                    {
+                                        for (int i = 0; i < pCount; i++)
+                                        {
+                                            var perf = pGorev[i] * 4;
+                                            if (perf < 0) perf = 0;
+                                            if (perf > 100) perf = 100;
+
+                                            <tr>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar bg-light rounded-circle text-primary me-2 d-flex align-items-center justify-content-center" style="width:32px; height:32px;">
+                                                            <i class="fa-solid fa-user small"></i>
+                                                        </div>
+                                                        <span class="fw-bold text-dark">@pAd[i]</span>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center">@pGorev[i]</td>
+                                                <td class="text-end">
+                                                    <div class="d-flex align-items-center justify-content-end">
+                                                        <span class="me-2 small text-muted">%@(perf)</span>
+                                                        <div class="progress" style="width: 50px; height: 4px;">
+                                                            <div class="progress-bar bg-primary" role="progressbar" style="width: @(perf)%"></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="row mb-5">
-            <div class="col-md-5">
+            <div class="col-md-6">
                 <div class="card shadow border-0 h-100">
                     <div class="card-header bg-white py-3">
-                        <h5 class="mb-0 text-secondary"><i class="fa-solid fa-chart-pie"></i> Bölgesel Dağılım</h5>
+                        <h5 class="mb-0 text-secondary"><i class="fa-solid fa-chart-line"></i> Mali Durum (Özet)</h5>
                     </div>
                     <div class="card-body">
-                        @if (!Model.Tarlalar.Any())
-                        {
-                            <div class="text-center py-5 text-muted">Grafik için veri yok.</div>
-                        }
-                        else
-                        {
-                            <div style="height: 250px;">
-                                <canvas id="bolgeChart"></canvas>
-                            </div>
-                        }
+                        <div style="height: 250px;">
+                            <canvas id="homeFinansChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-7">
+            <div class="col-md-6">
                 <div class="card shadow border-0 h-100">
-                    <div class="card-header bg-white py-3 d-flex justify-content-between">
-                        <h5 class="mb-0 text-secondary"><i class="fa-solid fa-list"></i> Tarlalarım</h5>
-                        <a asp-controller="Tarla" asp-action="Index" class="btn btn-sm btn-link p-0">Tümünü Gör</a>
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 text-secondary"><i class="fa-solid fa-medal"></i> Ayın Personelleri</h5>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Tarla Adı</th>
-                                    <th>Lokasyon</th>
-                                    <th>Dönüm</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @if (Model.Tarlalar.Any())
-                                {
-                                    @foreach (var item in Model.Tarlalar.Take(5))
-                                    {
-                                        <tr>
-                                            <td>@item.Ad</td>
-                                            <td>@(item.Lokasyon?.Ad ?? "-")</td>
-                                            <td>@item.AlanDonum</td>
-                                        </tr>
-                                    }
-                                }
-                                else
-                                {
-                                    <tr>
-                                        <td colspan="3" class="text-center text-muted">Kayıtlı tarla bulunmuyor.</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                    <div class="card-body">
+                        <div style="height: 250px;">
+                            <canvas id="homePersonelChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
+}
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" />
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
     <script>
-        // ViewModel'den gelen Tarlalar listesini JS tarafında işleyip grafiğe döküyoruz
+        $(document).ready(function () {
+            var tabloAyarlari = {
+                language: { url: "//cdn.datatables.net/plug-ins/1.13.6/i18n/tr.json" },
+                pageLength: 5,
+                lengthChange: false,
+                searching: true,
+                ordering: true,
+                info: false
+            };
+            $('#tblTarlalar').DataTable(tabloAyarlari);
+            $('#tblPersonel').DataTable(tabloAyarlari);
+        });
 
-        // 1. Veriyi hazırla (Razor ile C# verisini JS dizisine çevir)
-        // Burada Lokasyon bazlı gruplama yapıyoruz
-        var rawData = @Html.Raw(Json.Serialize(
-                    Model.Tarlalar
-                            .GroupBy(t => t.Lokasyon != null ? t.Lokasyon.Ad : "Belirsiz")
-                            .Select(g => new { Label = g.Key, Count = g.Count() })
-            ));
+        // Veri Güvenliği: Eğer listeler null ise JS hatası almamak için boş dizi [] gönderiyoruz.
+        const aylarData = @Html.Raw(JsonSerializer.Serialize(m.Aylar ?? new List<string>()));
+        const gelirData = @Html.Raw(JsonSerializer.Serialize(m.Gelirler ?? new List<decimal>()));
+        const giderData = @Html.Raw(JsonSerializer.Serialize(m.Giderler ?? new List<decimal>()));
+        const persAdData = @Html.Raw(JsonSerializer.Serialize(m.PersonelAdlari ?? new List<string>()));
+        const persGorevData = @Html.Raw(JsonSerializer.Serialize(m.TamamlananGorevler ?? new List<int>()));
 
-    var labels = rawData.map(x => x.label);
-    var dataCounts = rawData.map(x => x.count);
-
-        if (dataCounts && dataCounts.length > 0) {
-            const ctx = document.getElementById('bolgeChart');
-            new Chart(ctx, {
-                type: 'doughnut',
+        // 1) Finans Chart
+        const ctxFinans = document.getElementById('homeFinansChart');
+        if (ctxFinans) {
+            new Chart(ctxFinans, {
+                type: 'line',
                 data: {
-                    labels: labels,
+                    labels: aylarData,
+                    datasets: [
+                        {
+                            label: 'Gelir',
+                            data: gelirData,
+                            borderColor: '#198754',
+                            tension: 0.4,
+                            fill: false
+                        },
+                        {
+                            label: 'Gider',
+                            data: giderData,
+                            borderColor: '#dc3545',
+                            tension: 0.4,
+                            fill: false
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        // 2) Personel Chart
+        const ctxPersonel = document.getElementById('homePersonelChart');
+        if (ctxPersonel) {
+            new Chart(ctxPersonel, {
+                type: 'bar',
+                data: {
+                    labels: persAdData,
                     datasets: [{
-                        data: dataCounts,
-                        backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#0dcaf0', '#6610f2', '#fd7e14'],
-                        hoverOffset: 4
+                        label: 'Tamamlanan Görev',
+                        data: persGorevData,
+                        backgroundColor: '#0dcaf0',
+                        borderRadius: 5
                     }]
                 },
                 options: {
+                    indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
+                    plugins: { legend: { display: false } }
                 }
             });
         }

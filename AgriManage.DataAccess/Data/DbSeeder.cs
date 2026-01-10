@@ -1,199 +1,221 @@
 ﻿using AgriManage.DataAccess.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace AgriManage.DataAccess.Data
 {
     public static class DbSeeder
     {
-        public static void Seed(ApplicationDbContext context)
+        public static async Task Seed(IServiceProvider serviceProvider)
         {
-            // Veritabanı yoksa oluşturur
+            var context = serviceProvider.GetService<ApplicationDbContext>();
+            var userManager = serviceProvider.GetService<UserManager<ApplicationUser>>();
+            var roleManager = serviceProvider.GetService<RoleManager<IdentityRole>>();
+
+            // 1. Veritabanını Garantiye Al
             context.Database.EnsureCreated();
 
             // ==========================================
-            // 1. TEMEL TANIMLAR (Sadece Mevcut Alanlar)
+            // 2. ROLLERİ EKLE
+            // ==========================================
+            string[] roller = { "Admin", "ZiraatMuhendisi", "Operator", "Ciftci", "User" };
+            foreach (var rol in roller)
+            {
+                if (!await roleManager.RoleExistsAsync(rol))
+                    await roleManager.CreateAsync(new IdentityRole(rol));
+            }
+
+            // ==========================================
+            // 3. LOOKUP TABLOLARI (ADIM ADIM KAYIT)
             // ==========================================
 
-            // LOKASYONLAR
-            if (!context.Lokasyonlar.Any())
-            {
-                context.Lokasyonlar.AddRange(new List<Lokasyon>
-                {
-                    new Lokasyon { Ad = "Kuzey Ovası (Edirne)" },
-                    new Lokasyon { Ad = "Güney Yamaç (Tekirdağ)" },
-                    new Lokasyon { Ad = "Nehir Kenarı (İpsala)" }
-                });
-                context.SaveChanges();
-            }
-
-            // SEZONLAR
-            if (!context.Sezonlar.Any())
-            {
-                context.Sezonlar.AddRange(new List<Sezon>
-                {
-                    new Sezon { Ad = "2024 Sezonu", BaslangicTarihi = DateTime.Now.AddYears(-1), BitisTarihi = DateTime.Now.AddMonths(-6), Aktif = false },
-                    new Sezon { Ad = "2025 Sezonu", BaslangicTarihi = DateTime.Now.AddMonths(-2), BitisTarihi = DateTime.Now.AddMonths(8), Aktif = true }
-                });
-                context.SaveChanges();
-            }
-
-            // ÜRÜNLER
-            if (!context.Urunler.Any())
-            {
-                context.Urunler.AddRange(new List<Urun>
-                {
-                    new Urun { Ad = "Buğday (Ceyhan-99)" },
-                    new Urun { Ad = "Ayçiçeği (Pioneer)" },
-                    new Urun { Ad = "Mısır (Slajlık)" },
-                    new Urun { Ad = "Çeltik (Osmancık)" }
-                });
-                context.SaveChanges();
-            }
-
-            // EKİPMAN DURUMLARI (HATA BURADAYDI - DÜZELTİLDİ)
-            if (!context.EkipmanDurumlari.Any())
-            {
-                context.EkipmanDurumlari.AddRange(new List<EkipmanDurumu>
-                {
-                    new EkipmanDurumu { Ad = "Aktif" },
-                    new EkipmanDurumu { Ad = "Bakımda" },
-                    new EkipmanDurumu { Ad = "Arızalı" }
-                });
-                context.SaveChanges();
-            }
-
-            // GÖREV DURUMLARI
-            if (!context.GorevDurumlari.Any())
-            {
-                context.GorevDurumlari.AddRange(new List<GorevDurumu>
-                {
-                    new GorevDurumu { Ad = "Bekliyor" },
-                    new GorevDurumu { Ad = "Devam Ediyor" },
-                    new GorevDurumu { Ad = "Tamamlandı" }
-                });
-                context.SaveChanges();
-            }
-
-            // DEPOLAR
-            if (!context.Depolar.Any())
-            {
-                context.Depolar.AddRange(new List<Depo>
-                {
-                    new Depo { Ad = "Merkez Hangar" },
-                    new Depo { Ad = "İlaç Deposu" }
-                });
-                context.SaveChanges();
-            }
-
-            // DEPARTMANLAR
+            // A) DEPARTMANLAR
             if (!context.Departmanlar.Any())
             {
-                context.Departmanlar.AddRange(new List<Departman>
-                {
+                context.Departmanlar.AddRange(
                     new Departman { Ad = "Saha Operasyon" },
                     new Departman { Ad = "Teknik Bakım" },
-                    new Departman { Ad = "İdari İşler" }
-                });
-                context.SaveChanges();
+                    new Departman { Ad = "Yönetim" }
+                );
+                await context.SaveChangesAsync(); // HATA OLMASIN DİYE BURADA KAYDEDİYORUZ
+            }
+
+            // B) BÖLGELER (Önce Bölge eklenmeli!)
+            if (!context.Bolgeler.Any())
+            {
+                context.Bolgeler.AddRange(
+                    new Bolge { Ad = "Trakya Bölgesi" },
+                    new Bolge { Ad = "Ege Bölgesi" }
+                );
+                await context.SaveChangesAsync(); // KAYDET Kİ ID OLUŞSUN!
+            }
+
+            // C) LOKASYONLAR (Artık Bölge ID'si veritabanında var)
+            if (!context.Lokasyonlar.Any())
+            {
+                // Veritabanından gerçek bir Bölge ID'si çekiyoruz
+                // First yerine FirstOrDefault kullanıyoruz ki hata patlamasın
+                var bolge = context.Bolgeler.FirstOrDefault();
+
+                if (bolge != null)
+                {
+                    context.Lokasyonlar.AddRange(
+                        new Lokasyon { Ad = "Merkez Çiftlik", Adres = "Tekirdağ", BolgeId = bolge.Id },
+                        new Lokasyon { Ad = "Kuzey Arazisi", Adres = "Edirne", BolgeId = bolge.Id }
+                    );
+                    await context.SaveChangesAsync(); // Lokasyonları kaydet
+                }
             }
 
             // ==========================================
-            // 2. İLİŞKİSEL VERİLER
+            // 4. KULLANICILAR VE PERSONEL
             // ==========================================
 
-            // EKİPMANLAR
-            if (!context.Ekipmanlar.Any())
-            {
-                // Ekipman durum ID'lerini güvenli şekilde alıyoruz
-                var aktifDurum = context.EkipmanDurumlari.FirstOrDefault(x => x.Ad == "Aktif");
-                var arizaliDurum = context.EkipmanDurumlari.FirstOrDefault(x => x.Ad == "Arızalı");
-
-                // Eğer veritabanı boşsa ve yukarıdaki sorgular null dönerse patlamaması için kontrol:
-                int aktifId = aktifDurum != null ? aktifDurum.Id : 1;
-                int arizaliId = arizaliDurum != null ? arizaliDurum.Id : 1;
-
-                context.Ekipmanlar.AddRange(new List<Ekipman>
-                {
-                    new Ekipman { Ad = "New Holland TR6", Marka = "New Holland", Model = "2023", SeriNo = "NH-100", EkipmanDurumuId = aktifId },
-                    new Ekipman { Ad = "İlaçlama Makinesi", Marka = "Öntar", Model = "2018", SeriNo = "ILC-55", EkipmanDurumuId = arizaliId }
-                });
-                context.SaveChanges();
-            }
-
-            // TARLALAR
-            if (!context.Tarlalar.Any())
-            {
-                var lok1 = context.Lokasyonlar.First().Id;
-                var lok2 = context.Lokasyonlar.Last().Id;
-
-                context.Tarlalar.AddRange(new List<Tarla>
-                {
-                    new Tarla { Ad = "Büyük Çayır", TapuAdaParsel = "105/2", AlanDonum = 60, LokasyonId = lok1 },
-                    new Tarla { Ad = "Kurak Tepe", TapuAdaParsel = "108/9", AlanDonum = 25, LokasyonId = lok2 }
-                });
-                context.SaveChanges();
-            }
-
-            // STOKLAR
-            if (!context.StokItemleri.Any())
-            {
-                var depoId = context.Depolar.First().Id;
-                context.StokItemleri.AddRange(new List<StokItem>
-                {
-                    new StokItem { Ad = "Üre Gübresi", Birim = "KG", Miktar = 5000, DepoId = depoId },
-                    new StokItem { Ad = "Ot İlacı", Birim = "LT", Miktar = 10, DepoId = depoId }
-                });
-                context.SaveChanges();
-            }
-
-            // POZİSYONLAR
+            // Pozisyonlar (Departman ID lazım)
             if (!context.Pozisyonlar.Any())
             {
-                var dept = context.Departmanlar.First().Id;
-                context.Pozisyonlar.Add(new Pozisyon { Ad = "Mühendis", DepartmanId = dept });
-                context.SaveChanges();
+                var dep = context.Departmanlar.FirstOrDefault();
+                if (dep != null)
+                {
+                    context.Pozisyonlar.Add(new Pozisyon { Ad = "Mühendis", DepartmanId = dep.Id });
+                    context.Pozisyonlar.Add(new Pozisyon { Ad = "Operatör", DepartmanId = dep.Id });
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            // Kullanıcı Ekleme
+            // Not: Kullanıcı zaten varsa tekrar eklemeye çalışmaz
+            var pozisyon = context.Pozisyonlar.FirstOrDefault();
+
+            if (pozisyon != null)
+            {
+                var usersToCheck = new List<(string Email, string Ad, string Rol)>
+                {
+                    ("admin@agri.com", "Melih Kalkan", "Admin"),
+                    ("ali@agri.com", "Ali Yılmaz", "ZiraatMuhendisi"),
+                    ("ayse@agri.com", "Ayşe Demir", "Operator")
+                };
+
+                foreach (var u in usersToCheck)
+                {
+                    var existingUser = await userManager.FindByEmailAsync(u.Email);
+                    if (existingUser == null)
+                    {
+                        var newUser = new ApplicationUser
+                        {
+                            UserName = u.Email,
+                            Email = u.Email,
+                            TamAd = u.Ad,
+                            EmailConfirmed = true
+                        };
+                        var result = await userManager.CreateAsync(newUser, "Agri123!");
+                        if (result.Succeeded)
+                        {
+                            await userManager.AddToRoleAsync(newUser, u.Rol);
+
+                            // Personel kaydı
+                            context.Personeller.Add(new Personel
+                            {
+                                ApplicationUserId = newUser.Id,
+                                SicilNo = "P-" + new Random().Next(100, 999),
+                                IseBaslamaTarihi = DateTime.Now.AddYears(-1),
+                                PozisyonId = pozisyon.Id
+                            });
+                        }
+                    }
+                    else
+                    {
+                        // Kullanıcı var ama Personel kaydı yoksa ekle
+                        if (!context.Personeller.Any(p => p.ApplicationUserId == existingUser.Id))
+                        {
+                            context.Personeller.Add(new Personel
+                            {
+                                ApplicationUserId = existingUser.Id,
+                                SicilNo = "P-" + new Random().Next(100, 999),
+                                IseBaslamaTarihi = DateTime.Now.AddYears(-1),
+                                PozisyonId = pozisyon.Id
+                            });
+                        }
+                    }
+                }
+                // Kullanıcı/Personel döngüsü bitince kaydet
+                await context.SaveChangesAsync();
             }
 
             // ==========================================
-            // 3. EKİM PLANLARI (TEST İÇİN EN ÖNEMLİSİ)
+            // 5. TARLALAR (Lokasyon ID lazım)
             // ==========================================
-
-            if (!context.EkimPlanlari.Any())
+            if (!context.Tarlalar.Any())
             {
-                var tarlalar = context.Tarlalar.OrderBy(x => x.Id).ToList();
-                var urun = context.Urunler.FirstOrDefault();
-                var sezon = context.Sezonlar.FirstOrDefault(x => x.Aktif);
-
-                if (tarlalar.Count >= 2 && urun != null && sezon != null)
+                var lok = context.Lokasyonlar.FirstOrDefault();
+                if (lok != null)
                 {
-                    // 1. Durum: AKTİF EKİM (Hasat Bekleyen)
-                    context.EkimPlanlari.Add(new EkimPlani
-                    {
-                        TarlaId = tarlalar[0].Id,
-                        UrunId = urun.Id,
-                        SezonId = sezon.Id,
-                        EkimTarihi = DateTime.Now.AddMonths(-2),
-                        HasatTarihi = null,
-                        BeklenenVerimKg = 25000,
-                        GerceklesenVerimKg = 0
-                    });
+                    context.Tarlalar.AddRange(
+                        new Tarla { Ad = "Büyük Ova", AlanDonum = 120.5m, LokasyonId = lok.Id, TapuAdaParsel = "101/1" },
+                        new Tarla { Ad = "Dere Kenarı", AlanDonum = 85.0m, LokasyonId = lok.Id, TapuAdaParsel = "102/5" },
+                        new Tarla { Ad = "Sera Bölgesi", AlanDonum = 15.0m, LokasyonId = lok.Id, TapuAdaParsel = "103/9" }
+                    );
+                    await context.SaveChangesAsync();
+                }
+            }
 
-                    // 2. Durum: BİTMİŞ EKİM (Geçmiş)
-                    context.EkimPlanlari.Add(new EkimPlani
-                    {
-                        TarlaId = tarlalar[1].Id,
-                        UrunId = urun.Id,
-                        SezonId = sezon.Id,
-                        EkimTarihi = DateTime.Now.AddMonths(-6),
-                        HasatTarihi = DateTime.Now.AddMonths(-1),
-                        BeklenenVerimKg = 10000,
-                        GerceklesenVerimKg = 9500
-                    });
+            // ==========================================
+            // 6. GÖREVLER (Personel, Tarla ve Lookup lazım)
+            // ==========================================
+            if (!context.Gorevler.Any())
+            {
+                // Önce Lookup'ları ekle ve KAYDET
+                if (!context.GorevDurumlari.Any())
+                {
+                    context.GorevDurumlari.AddRange(
+                        new GorevDurumu { Ad = "Bekliyor" },
+                        new GorevDurumu { Ad = "Devam Ediyor" },
+                        new GorevDurumu { Ad = "Tamamlandı" }
+                    );
+                    await context.SaveChangesAsync();
+                }
 
-                    context.SaveChanges();
+                if (!context.GorevTipleri.Any())
+                {
+                    context.GorevTipleri.AddRange(new GorevTipi { Ad = "Ekim" }, new GorevTipi { Ad = "Hasat" });
+                    await context.SaveChangesAsync();
+                }
+
+                // Şimdi verileri çekip görev oluşturabiliriz
+                var personeller = context.Personeller.ToList();
+                var tarlalar = context.Tarlalar.ToList();
+                var durumTamam = context.GorevDurumlari.FirstOrDefault(x => x.Ad == "Tamamlandı");
+
+                if (personeller.Any() && tarlalar.Any() && durumTamam != null)
+                {
+                    var gorevListesi = new List<Gorev>();
+                    var rnd = new Random();
+
+                    foreach (var p in personeller)
+                    {
+                        int sayi = rnd.Next(5, 10);
+                        for (int i = 0; i < sayi; i++)
+                        {
+                            gorevListesi.Add(new Gorev
+                            {
+                                PersonelId = p.Id,
+                                TarlaId = tarlalar[rnd.Next(tarlalar.Count)].Id,
+                                GorevDurumuId = durumTamam.Id,
+                                Baslik = "Görev #" + rnd.Next(1000),
+                                Aciklama = "Otomatik veri.",
+                                PlanlananBaslangic = DateTime.Now.AddDays(-rnd.Next(10, 60)),
+                                TamamlanmaTarihi = DateTime.Now.AddDays(-rnd.Next(1, 9)),
+                                OlusturmaTarihi = DateTime.Now // SQL hatası almamak için
+                            });
+                        }
+                    }
+                    context.Gorevler.AddRange(gorevListesi);
+                    await context.SaveChangesAsync();
                 }
             }
         }

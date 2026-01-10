@@ -18,22 +18,25 @@
 
     <style>
         @@media all and (min-width: 992px) {
-            .navbar .nav-item:hover > .dropdown-menu {
+            .navbar .nav-item:hover > .dropdown-menu
+
+        {
+            display: block;
+            margin-top: 0;
+        }
+
+        .dropdown-menu .dropend {
+            position: relative;
+        }
+
+            .dropdown-menu .dropend:hover > .dropdown-menu {
                 display: block;
-                margin-top: 0;
+                position: absolute;
+                top: 0;
+                left: 100%;
+                margin-top: -5px;
             }
 
-            .dropdown-menu .dropend {
-                position: relative;
-            }
-
-                .dropdown-menu .dropend:hover > .dropdown-menu {
-                    display: block;
-                    position: absolute;
-                    top: 0;
-                    left: 100%;
-                    margin-top: -5px;
-                }
         }
 
         .navbar-brand {
@@ -116,7 +119,6 @@
                                                 <li><a class="dropdown-item" asp-controller="Vardiya" asp-action="Program">Vardiya Çizelgesi</a></li>
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li><a class="dropdown-item fw-bold" asp-controller="Vardiya" asp-action="Ata">Vardiya Ata</a></li>
-                                                <li><a class="dropdown-item" asp-controller="Role" asp-action="Index">Rol Yönetimi</a></li>
                                             </ul>
                                         </li>
                                     }
@@ -153,12 +155,7 @@
                                                         <i class="fa-solid fa-warehouse text-success me-2"></i> Merkez Depo
                                                     </a>
                                                 </li>
-                                                <li><a class="dropdown-item" asp-controller="Talep" asp-action="Index">Satın Alma Talepleri</a></li>
-
-                                                @if (User.IsInRole("Admin") || User.IsInRole("SatinAlimGorevlisi"))
-                                                {
-                                                    <li><a class="dropdown-item" asp-controller="Tedarikci" asp-action="Index">Tedarikçiler</a></li>
-                                                }
+                                                @* Satın Alma Talepleri Linki Kaldırıldı *@
                                             </ul>
                                         </li>
                                     }
