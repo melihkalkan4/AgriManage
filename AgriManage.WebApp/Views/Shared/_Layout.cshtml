@@ -87,7 +87,10 @@
                                 </a>
                                 <ul class="dropdown-menu shadow-lg">
 
-                                    @if (User.IsInRole("Admin") || User.IsInRole("ZiraatMuhendisi") || User.IsInRole("Ciftci"))
+                                    @* =================================================== *@
+                                    @* 1. TARIM SAHALARI (Mühendis, Çiftçi, Admin) *@
+                                    @* =================================================== *@
+                                    @if (User.IsInRole("Admin") || User.IsInRole("ZIRAATMUHENDISI") || User.IsInRole("Ciftci"))
                                     {
                                         <li class="dropend">
                                             <a class="dropdown-item dropdown-toggle" href="#">
@@ -97,8 +100,8 @@
                                                 <li><a class="dropdown-item" asp-controller="Tarla" asp-action="Index">Tarlalarım</a></li>
                                                 <li><a class="dropdown-item" asp-controller="Sera" asp-action="Index">Seralarım</a></li>
 
-                                                @* Çiftçi yeni sera/tarla oluşturamaz, sadece görür *@
-                                                @if (User.IsInRole("Admin") || User.IsInRole("ZiraatMuhendisi"))
+                                                @* Sadece Admin ve Mühendis Yeni Ekleme Yapar *@
+                                                @if (User.IsInRole("Admin") || User.IsInRole("ZIRAATMUHENDISI"))
                                                 {
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li><a class="dropdown-item" asp-controller="Tarla" asp-action="Create">Yeni Tarla Ekle</a></li>
@@ -108,7 +111,10 @@
                                         </li>
                                     }
 
-                                    @if (User.IsInRole("Admin"))
+                                    @* =================================================== *@
+                                    @* 2. PERSONEL YÖNETİMİ (Admin, Yönetici) *@
+                                    @* =================================================== *@
+                                    @if (User.IsInRole("Admin") || User.IsInRole("YONETICI"))
                                     {
                                         <li class="dropend">
                                             <a class="dropdown-item dropdown-toggle" href="#">
@@ -123,7 +129,10 @@
                                         </li>
                                     }
 
-                                    @if (User.IsInRole("Admin") || User.IsInRole("BakimGorevlisi") || User.IsInRole("ZiraatMuhendisi"))
+                                    @* =================================================== *@
+                                    @* 3. EKİPMAN VE BAKIM (Admin, Teknisyen, Görevli, Mühendis) *@
+                                    @* =================================================== *@
+                                    @if (User.IsInRole("Admin") || User.IsInRole("BAKIMTEKNISYENI") || User.IsInRole("BAKIMGOREVLISI") || User.IsInRole("ZIRAATMUHENDISI"))
                                     {
                                         <li class="dropend">
                                             <a class="dropdown-item dropdown-toggle" href="#">
@@ -133,8 +142,8 @@
                                                 <li><a class="dropdown-item" asp-controller="Ekipman" asp-action="Index">Envanter</a></li>
                                                 <li><a class="dropdown-item" asp-controller="Bakim" asp-action="Index">Bakım Kayıtları</a></li>
 
-                                                @* Sadece Admin ve Bakımcı Yeni Ekipman Ekler *@
-                                                @if (User.IsInRole("Admin") || User.IsInRole("BakimGorevlisi"))
+                                                @* Sadece Admin ve Bakım Ekibi Yeni Ekipman Ekler *@
+                                                @if (User.IsInRole("Admin") || User.IsInRole("BAKIMTEKNISYENI"))
                                                 {
                                                     <li><hr class="dropdown-divider"></li>
                                                     <li><a class="dropdown-item" asp-controller="Ekipman" asp-action="Create">Yeni Ekipman</a></li>
@@ -143,7 +152,10 @@
                                         </li>
                                     }
 
-                                    @if (User.IsInRole("Admin") || User.IsInRole("SatinAlimGorevlisi") || User.IsInRole("ZiraatMuhendisi"))
+                                    @* =================================================== *@
+                                    @* 4. STOK VE LOJİSTİK (Admin, Depocu, Mühendis) *@
+                                    @* =================================================== *@
+                                    @if (User.IsInRole("Admin") || User.IsInRole("DEPOSORUMLUSU") || User.IsInRole("ZIRAATMUHENDISI"))
                                     {
                                         <li class="dropend">
                                             <a class="dropdown-item dropdown-toggle" href="#">
@@ -151,11 +163,11 @@
                                             </a>
                                             <ul class="dropdown-menu">
                                                 <li>
-                                                    <a class="dropdown-item fw-bold" asp-controller="Envanter" asp-action="Index" asp-route-tarlaId="0">
+                                                    @* tarlaId=0 Merkez Depo demektir *@
+                                                    <a class="dropdown-item fw-bold" asp-controller="Inventory" asp-action="Index" asp-route-tarlaId="0">
                                                         <i class="fa-solid fa-warehouse text-success me-2"></i> Merkez Depo
                                                     </a>
                                                 </li>
-                                                @* Satın Alma Talepleri Linki Kaldırıldı *@
                                             </ul>
                                         </li>
                                     }
@@ -165,7 +177,8 @@
                                 </ul>
                             </li>
 
-                            @if (User.IsInRole("Admin") || User.IsInRole("ZiraatMuhendisi"))
+                            @* ANALİZ MENÜSÜ *@
+                            @if (User.IsInRole("Admin") || User.IsInRole("ZIRAATMUHENDISI") || User.IsInRole("YONETICI"))
                             {
                                 <li class="nav-item ms-lg-2">
                                     <a class="nav-link text-white" asp-controller="Analiz" asp-action="Index">
@@ -176,19 +189,32 @@
                         }
                     </ul>
 
+                    @* =================================================== *@
+                    @* KULLANICI PROFİL ALANI *@
+                    @* =================================================== *@
                     <ul class="navbar-nav">
                         @if (SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="fa-solid fa-user-circle me-1"></i> @User.Identity?.Name
+
+                                    @* ROZETLER *@
                                     @if (User.IsInRole("Admin"))
                                     {
                                         <span class="badge bg-danger ms-1" style="font-size: 0.6rem;">ADMIN</span>
                                     }
-                                    @if (User.IsInRole("ZiraatMuhendisi"))
+                                    @if (User.IsInRole("ZIRAATMUHENDISI"))
                                     {
-                                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">MÜHENDİS</span>
+                                        <span class="badge bg-success ms-1" style="font-size: 0.6rem;">Z. MÜHENDİS</span>
+                                    }
+                                    @if (User.IsInRole("BAKIMTEKNISYENI"))
+                                    {
+                                        <span class="badge bg-info text-dark ms-1" style="font-size: 0.6rem;">TEKNİSYEN</span>
+                                    }
+                                    @if (User.IsInRole("DEPOSORUMLUSU"))
+                                    {
+                                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">DEPO</span>
                                     }
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">

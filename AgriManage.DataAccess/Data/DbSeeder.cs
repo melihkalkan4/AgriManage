@@ -2,10 +2,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace AgriManage.DataAccess.Data
 {
@@ -17,13 +13,18 @@ namespace AgriManage.DataAccess.Data
             var userManager = serviceProvider.GetService<UserManager<ApplicationUser>>();
             var roleManager = serviceProvider.GetService<RoleManager<IdentityRole>>();
 
-            // 1. Veritabanını Garantiye Al
-            context.Database.EnsureCreated();
+            // 1. Veritabanı yoksa oluştur (Migration kullanıyorsan burayı kapatabilirsin)
+            // context.Database.EnsureCreated(); 
 
             // ==========================================
             // 2. ROLLERİ EKLE
             // ==========================================
-            string[] roller = { "Admin", "ZiraatMuhendisi", "Operator", "Ciftci", "User" };
+            string[] roller = {
+                "Admin", "Ciftci", "User", "ZIRAATMUHENDISI",
+                "YONETICI", "TRAKTOROPERATORU", "BAKIMGOREVLISI",
+                "BAKIMTEKNISYENI", "DEPOSORUMLUSU"
+            };
+
             foreach (var rol in roller)
             {
                 if (!await roleManager.RoleExistsAsync(rol))
@@ -31,7 +32,7 @@ namespace AgriManage.DataAccess.Data
             }
 
             // ==========================================
-            // 3. LOOKUP TABLOLARI (ADIM ADIM KAYIT)
+            // 3. LOOKUP TABLOLARI
             // ==========================================
 
             // A) DEPARTMANLAR
@@ -42,33 +43,30 @@ namespace AgriManage.DataAccess.Data
                     new Departman { Ad = "Teknik Bakım" },
                     new Departman { Ad = "Yönetim" }
                 );
-                await context.SaveChangesAsync(); // HATA OLMASIN DİYE BURADA KAYDEDİYORUZ
+                await context.SaveChangesAsync();
             }
 
-            // B) BÖLGELER (Önce Bölge eklenmeli!)
+            // B) BÖLGELER (DÜZELTİLEN KISIM: Sehir alanı kaldırıldı)
             if (!context.Bolgeler.Any())
             {
                 context.Bolgeler.AddRange(
                     new Bolge { Ad = "Trakya Bölgesi" },
                     new Bolge { Ad = "Ege Bölgesi" }
                 );
-                await context.SaveChangesAsync(); // KAYDET Kİ ID OLUŞSUN!
+                await context.SaveChangesAsync();
             }
 
-            // C) LOKASYONLAR (Artık Bölge ID'si veritabanında var)
+            // C) LOKASYONLAR
             if (!context.Lokasyonlar.Any())
             {
-                // Veritabanından gerçek bir Bölge ID'si çekiyoruz
-                // First yerine FirstOrDefault kullanıyoruz ki hata patlamasın
                 var bolge = context.Bolgeler.FirstOrDefault();
-
                 if (bolge != null)
                 {
                     context.Lokasyonlar.AddRange(
-                        new Lokasyon { Ad = "Merkez Çiftlik", Adres = "Tekirdağ", BolgeId = bolge.Id },
-                        new Lokasyon { Ad = "Kuzey Arazisi", Adres = "Edirne", BolgeId = bolge.Id }
+                        new Lokasyon { Ad = "Merkez Çiftlik", Adres = "Tekirdağ Mrk", BolgeId = bolge.Id },
+                        new Lokasyon { Ad = "Kuzey Arazisi", Adres = "Edirne Yolu", BolgeId = bolge.Id }
                     );
-                    await context.SaveChangesAsync(); // Lokasyonları kaydet
+                    await context.SaveChangesAsync();
                 }
             }
 
@@ -76,145 +74,65 @@ namespace AgriManage.DataAccess.Data
             // 4. KULLANICILAR VE PERSONEL
             // ==========================================
 
-            // Pozisyonlar (Departman ID lazım)
+            // Pozisyonlar
             if (!context.Pozisyonlar.Any())
             {
                 var dep = context.Departmanlar.FirstOrDefault();
                 if (dep != null)
                 {
-                    context.Pozisyonlar.Add(new Pozisyon { Ad = "Mühendis", DepartmanId = dep.Id });
-                    context.Pozisyonlar.Add(new Pozisyon { Ad = "Operatör", DepartmanId = dep.Id });
+                    context.Pozisyonlar.AddRange(
+                        new Pozisyon { Ad = "Mühendis", DepartmanId = dep.Id },
+                        new Pozisyon { Ad = "Operatör", DepartmanId = dep.Id }
+                    );
                     await context.SaveChangesAsync();
                 }
             }
 
-            // Kullanıcı Ekleme
-            // Not: Kullanıcı zaten varsa tekrar eklemeye çalışmaz
-            var pozisyon = context.Pozisyonlar.FirstOrDefault();
-
-            if (pozisyon != null)
+            // Admin Kullanıcısı
+            var adminUser = await userManager.FindByEmailAsync("MelihTest@gmail.com");
+            if (adminUser == null)
             {
-                var usersToCheck = new List<(string Email, string Ad, string Rol)>
+                var newUser = new ApplicationUser
                 {
-                    ("admin@agri.com", "Melih Kalkan", "Admin"),
-                    ("ali@agri.com", "Ali Yılmaz", "ZiraatMuhendisi"),
-                    ("ayse@agri.com", "Ayşe Demir", "Operator")
+                    UserName = "MelihTest@gmail.com",
+                    Email = "MelihTest@gmail.com",
+                    TamAd = "Melih Admin",
+                    EmailConfirmed = true
                 };
-
-                foreach (var u in usersToCheck)
+                var result = await userManager.CreateAsync(newUser, "Admin123!");
+                if (result.Succeeded)
                 {
-                    var existingUser = await userManager.FindByEmailAsync(u.Email);
-                    if (existingUser == null)
-                    {
-                        var newUser = new ApplicationUser
-                        {
-                            UserName = u.Email,
-                            Email = u.Email,
-                            TamAd = u.Ad,
-                            EmailConfirmed = true
-                        };
-                        var result = await userManager.CreateAsync(newUser, "Agri123!");
-                        if (result.Succeeded)
-                        {
-                            await userManager.AddToRoleAsync(newUser, u.Rol);
+                    await userManager.AddToRoleAsync(newUser, "Admin");
 
-                            // Personel kaydı
-                            context.Personeller.Add(new Personel
-                            {
-                                ApplicationUserId = newUser.Id,
-                                SicilNo = "P-" + new Random().Next(100, 999),
-                                IseBaslamaTarihi = DateTime.Now.AddYears(-1),
-                                PozisyonId = pozisyon.Id
-                            });
-                        }
-                    }
-                    else
+                    var poz = context.Pozisyonlar.FirstOrDefault();
+                    if (poz != null)
                     {
-                        // Kullanıcı var ama Personel kaydı yoksa ekle
-                        if (!context.Personeller.Any(p => p.ApplicationUserId == existingUser.Id))
+                        context.Personeller.Add(new Personel
                         {
-                            context.Personeller.Add(new Personel
-                            {
-                                ApplicationUserId = existingUser.Id,
-                                SicilNo = "P-" + new Random().Next(100, 999),
-                                IseBaslamaTarihi = DateTime.Now.AddYears(-1),
-                                PozisyonId = pozisyon.Id
-                            });
-                        }
+                            ApplicationUserId = newUser.Id,
+                            SicilNo = "ADMIN-001",
+                            IseBaslamaTarihi = DateTime.Now,
+                            PozisyonId = poz.Id
+                        });
+                        await context.SaveChangesAsync();
                     }
                 }
-                // Kullanıcı/Personel döngüsü bitince kaydet
-                await context.SaveChangesAsync();
+                adminUser = await userManager.FindByEmailAsync("MelihTest@gmail.com");
             }
 
             // ==========================================
-            // 5. TARLALAR (Lokasyon ID lazım)
+            // 5. TARLALAR
             // ==========================================
             if (!context.Tarlalar.Any())
             {
                 var lok = context.Lokasyonlar.FirstOrDefault();
-                if (lok != null)
+
+                if (lok != null && adminUser != null)
                 {
                     context.Tarlalar.AddRange(
-                        new Tarla { Ad = "Büyük Ova", AlanDonum = 120.5m, LokasyonId = lok.Id, TapuAdaParsel = "101/1" },
-                        new Tarla { Ad = "Dere Kenarı", AlanDonum = 85.0m, LokasyonId = lok.Id, TapuAdaParsel = "102/5" },
-                        new Tarla { Ad = "Sera Bölgesi", AlanDonum = 15.0m, LokasyonId = lok.Id, TapuAdaParsel = "103/9" }
+                        new Tarla { Ad = "Büyük Ova", AlanDonum = 120.5m, LokasyonId = lok.Id, TapuAdaParsel = "101/1", ApplicationUserId = adminUser.Id },
+                        new Tarla { Ad = "Dere Kenarı", AlanDonum = 85.0m, LokasyonId = lok.Id, TapuAdaParsel = "102/5", ApplicationUserId = adminUser.Id }
                     );
-                    await context.SaveChangesAsync();
-                }
-            }
-
-            // ==========================================
-            // 6. GÖREVLER (Personel, Tarla ve Lookup lazım)
-            // ==========================================
-            if (!context.Gorevler.Any())
-            {
-                // Önce Lookup'ları ekle ve KAYDET
-                if (!context.GorevDurumlari.Any())
-                {
-                    context.GorevDurumlari.AddRange(
-                        new GorevDurumu { Ad = "Bekliyor" },
-                        new GorevDurumu { Ad = "Devam Ediyor" },
-                        new GorevDurumu { Ad = "Tamamlandı" }
-                    );
-                    await context.SaveChangesAsync();
-                }
-
-                if (!context.GorevTipleri.Any())
-                {
-                    context.GorevTipleri.AddRange(new GorevTipi { Ad = "Ekim" }, new GorevTipi { Ad = "Hasat" });
-                    await context.SaveChangesAsync();
-                }
-
-                // Şimdi verileri çekip görev oluşturabiliriz
-                var personeller = context.Personeller.ToList();
-                var tarlalar = context.Tarlalar.ToList();
-                var durumTamam = context.GorevDurumlari.FirstOrDefault(x => x.Ad == "Tamamlandı");
-
-                if (personeller.Any() && tarlalar.Any() && durumTamam != null)
-                {
-                    var gorevListesi = new List<Gorev>();
-                    var rnd = new Random();
-
-                    foreach (var p in personeller)
-                    {
-                        int sayi = rnd.Next(5, 10);
-                        for (int i = 0; i < sayi; i++)
-                        {
-                            gorevListesi.Add(new Gorev
-                            {
-                                PersonelId = p.Id,
-                                TarlaId = tarlalar[rnd.Next(tarlalar.Count)].Id,
-                                GorevDurumuId = durumTamam.Id,
-                                Baslik = "Görev #" + rnd.Next(1000),
-                                Aciklama = "Otomatik veri.",
-                                PlanlananBaslangic = DateTime.Now.AddDays(-rnd.Next(10, 60)),
-                                TamamlanmaTarihi = DateTime.Now.AddDays(-rnd.Next(1, 9)),
-                                OlusturmaTarihi = DateTime.Now // SQL hatası almamak için
-                            });
-                        }
-                    }
-                    context.Gorevler.AddRange(gorevListesi);
                     await context.SaveChangesAsync();
                 }
             }

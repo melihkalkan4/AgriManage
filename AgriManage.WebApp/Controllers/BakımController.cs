@@ -4,10 +4,16 @@ using Microsoft.EntityFrameworkCore;
 using AgriManage.DataAccess.Data;
 using AgriManage.DataAccess.Models;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace AgriManage.Controllers
 {
-    [Authorize]
+    // =========================================================================
+    // YETKİLENDİRME:
+    // Bu Controller'a sadece Adminler ve Bakım ekibi (Teknisyen/Görevli) girebilir.
+    // Ziraat Mühendisleri veya Çiftçiler burayı göremez.
+    // =========================================================================
+    [Authorize(Roles = "Admin, BAKIMTEKNISYENI, BAKIMGOREVLISI")]
     public class BakimController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -22,21 +28,23 @@ namespace AgriManage.Controllers
         // ==========================================
         public async Task<IActionResult> Index()
         {
-            // 1. Gelecek/Mevcut Planları Çek
+            // 1. Gelecek/Mevcut Planları Çek (Henüz yapılmamış olanlar)
             var bakimPlanlari = await _context.BakimPlanlari
                 .Include(b => b.Ekipman)
                 .Include(b => b.BakimTipi)
-                .OrderBy(b => b.PlanlananTarih) // Tarihe göre sırala
+                .OrderBy(b => b.PlanlananTarih) // Tarihe göre sırala (En yakın tarih en üstte)
                 .ToListAsync();
 
             // 2. Yapılmış Geçmiş Kayıtları Çek
-            // BURASI ÇOK ÖNEMLİ: Personel adını görebilmek için ApplicationUser'ı da çekiyoruz.
+            // Personel adını görebilmek için ApplicationUser bağlantısını kuruyoruz.
             var gecmisIslemler = await _context.BakimKayitlari
                 .Include(k => k.Personel)
-                    .ThenInclude(p => p.ApplicationUser) // <--- İşte TamAd'ı getiren kilit nokta burası
-                .Include(k => k.BakimPlani).ThenInclude(bp => bp.Ekipman)
-                .Include(k => k.BakimPlani).ThenInclude(bp => bp.BakimTipi)
-                .OrderByDescending(k => k.Tarih) // En son yapılan en üstte
+                    .ThenInclude(p => p.ApplicationUser)
+                .Include(k => k.BakimPlani)
+                    .ThenInclude(bp => bp.Ekipman)
+                .Include(k => k.BakimPlani)
+                    .ThenInclude(bp => bp.BakimTipi)
+                .OrderByDescending(k => k.Tarih) // En son yapılan işlem en üstte
                 .ToListAsync();
 
             ViewBag.GecmisIslemler = gecmisIslemler;
@@ -60,7 +68,7 @@ namespace AgriManage.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PlanOlustur(BakimPlani plan)
         {
-            // ID gönderiyoruz, nesne null geliyor. Validasyonu temizliyoruz.
+            // İlişkisel nesneler formdan null gelebilir, ID yeterlidir. Validasyonu temizliyoruz.
             ModelState.Remove("Ekipman");
             ModelState.Remove("BakimTipi");
             ModelState.Remove("BakimKayitlari");
@@ -72,6 +80,7 @@ namespace AgriManage.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            // Hata varsa dropdownları tekrar doldur
             ViewData["EkipmanId"] = new SelectList(_context.Ekipmanlar, "Id", "Ad", plan.EkipmanId);
             ViewData["BakimTipiId"] = new SelectList(_context.BakimTipleri, "Id", "Ad", plan.BakimTipiId);
             return View(plan);
@@ -89,12 +98,13 @@ namespace AgriManage.Controllers
 
             if (plan == null) return NotFound();
 
+            // View'da hangi ekipmana işlem yapıldığını göstermek için
             ViewBag.PlanBilgisi = $"{plan.Ekipman.Ad} - {plan.BakimTipi.Ad}";
 
             var kayit = new BakimKaydi
             {
                 BakimPlaniId = planId,
-                Tarih = DateTime.Now
+                Tarih = DateTime.Now // Varsayılan olarak şu anın saati
             };
             return View(kayit);
         }
@@ -107,30 +117,43 @@ namespace AgriManage.Controllers
             ModelState.Remove("Personel");
             ModelState.Remove("BakimPlani");
 
-            // Kullanıcıyı Bul
+            // --- PERSONEL BULMA MANTIĞI ---
+            // Sisteme giriş yapmış kullanıcının email adresini al
             var userMail = User.Identity.Name;
+
+            // Bu email adresine sahip Personel kartını bul
             var personel = _context.Personeller
                 .Include(p => p.ApplicationUser)
                 .FirstOrDefault(p => p.ApplicationUser.Email == userMail);
 
-            // Personel Atama Mantığı
             if (personel != null)
             {
+                // Eğer giriş yapan kişi bir Personel ise (Teknisyen vb.)
                 kayit.PersonelId = personel.Id;
             }
             else if (User.IsInRole("Admin"))
             {
-                // Admin ise ama Personel kaydı yoksa, dummy personel ata ve not düş
+                // Eğer giriş yapan Admin ise ama bir personel kartı yoksa:
+                // Veritabanındaki herhangi bir personeli (örneğin ilkini) 'dummy' olarak ata
+                // ve not düş. Bu, veritabanı bütünlüğünü korumak içindir.
                 var dummyPersonel = _context.Personeller.FirstOrDefault();
+
                 if (dummyPersonel != null)
                 {
                     kayit.PersonelId = dummyPersonel.Id;
-                    kayit.Aciklama = $"(ADMIN: {userMail}) - {kayit.Aciklama}";
+                    kayit.Aciklama = $"(ADMIN İŞLEMİ: {userMail}) - {kayit.Aciklama}";
+                }
+                else
+                {
+                    // Hiç personel yoksa işlem yapılamaz
+                    ModelState.AddModelError("", "Sistemde kayıtlı hiç personel yok. Önce personel ekleyiniz.");
+                    return ViewKayiplariDoldur(kayit);
                 }
             }
             else
             {
-                ModelState.AddModelError("", "Yetkisiz işlem. Personel veya Admin olmalısınız.");
+                // Ne personel ne admin
+                ModelState.AddModelError("", "Bu işlemi yapmak için yetkili bir personel kaydınız bulunamadı.");
                 return ViewKayiplariDoldur(kayit);
             }
 
@@ -143,7 +166,8 @@ namespace AgriManage.Controllers
                 var plan = await _context.BakimPlanlari.FindAsync(kayit.BakimPlaniId);
                 if (plan != null)
                 {
-                    // Plan tarihini 1 ay ileri atıyoruz (Periyodik bakım mantığı)
+                    // Periyodik bakım: Bir sonraki bakım tarihini 1 ay sonraya atıyoruz.
+                    // (Gerçek projede bu 'Periyot' alanından dinamik gelebilir)
                     plan.PlanlananTarih = DateTime.Now.AddMonths(1);
                     _context.Update(plan);
                 }
@@ -155,7 +179,7 @@ namespace AgriManage.Controllers
             return ViewKayiplariDoldur(kayit);
         }
 
-        // Hata durumunda View verilerini tekrar dolduran yardımcı metot
+        // Hata durumunda View verilerini (ViewBag vb.) tekrar dolduran yardımcı metot
         private IActionResult ViewKayiplariDoldur(BakimKaydi kayit)
         {
             var plan = _context.BakimPlanlari

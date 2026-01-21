@@ -54,34 +54,38 @@ namespace AgriManage.DataAccess.Data
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            // Identity (Kullanıcı) tablolarını oluşturur. BU SATIR ŞARTTIR.
+            // Identity (Kullanıcı) tablolarını oluşturur.
             base.OnModelCreating(builder);
 
             // --- HASSASİYET AYARLARI (Decimal tipler için) ---
+            // Uyarı veren tüm alanları buraya ekledik:
             builder.Entity<Tarla>().Property(t => t.AlanDonum).HasColumnType("decimal(18,2)");
             builder.Entity<StokHareket>().Property(s => s.BirimFiyat).HasColumnType("decimal(18,2)");
             builder.Entity<StokHareket>().Property(sh => sh.Miktar).HasColumnType("decimal(18,2)");
             builder.Entity<StokItem>().Property(si => si.Miktar).HasColumnType("decimal(18,2)");
+            builder.Entity<StokItem>().Property(si => si.KritikStokSeviyesi).HasColumnType("decimal(18,2)"); // EKLENDİ
             builder.Entity<BakimKaydi>().Property(b => b.Maliyet).HasColumnType("decimal(18,2)");
             builder.Entity<Gorev>().Property(g => g.PlanlananStokMiktari).HasColumnType("decimal(18,2)");
 
-            // --- İLİŞKİ YAPILANDIRMALARI (Cascade Delete Hatalarını Önlemek İçin) ---
+            // Ekim Planı ve Sera uyarıları için eklenenler:
+            builder.Entity<EkimPlani>().Property(x => x.BeklenenVerimKg).HasColumnType("decimal(18,2)");
+            builder.Entity<EkimPlani>().Property(x => x.GerceklesenVerimKg).HasColumnType("decimal(18,2)");
+            builder.Entity<Sera>().Property(x => x.AlanMetrekare).HasColumnType("decimal(18,2)");
 
-            // Ürün silinirse Tarla silinmesin
+            // --- İLİŞKİ YAPILANDIRMALARI ---
+
             builder.Entity<Urun>()
                 .HasOne(u => u.Tarla)
                 .WithMany(t => t.Urunler)
                 .HasForeignKey(u => u.TarlaId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Görev silinirse Personel silinmesin
             builder.Entity<Gorev>()
                 .HasOne(g => g.Personel)
                 .WithMany(p => p.AtananGorevler)
                 .HasForeignKey(g => g.PersonelId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // StokItem silinirse Depo silinmesin (Döngü hatasını önler)
             builder.Entity<StokItem>()
                 .HasOne(s => s.Depo)
                 .WithMany(d => d.StokItemleri)

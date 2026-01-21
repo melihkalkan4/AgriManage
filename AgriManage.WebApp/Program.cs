@@ -28,7 +28,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => {
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// 3. BAĞIMLILIK ENJEKSİYONU (DEPENDENCY INJECTION)
+// 3. BAĞIMLILIK ENJEKSİYONU (DI)
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
@@ -36,7 +36,7 @@ builder.Services.AddScoped<ITarlaService, TarlaService>();
 builder.Services.AddScoped<IAnalizService, AnalizService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IVardiyaService, VardiyaService>();
-builder.Services.AddScoped<TokenService>(); 
+builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<SeraService>();
 
 // 4. MİKROSERVİS BAĞLANTILARI
@@ -82,66 +82,20 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
-// 7. DATA SEEDING (Düzeltilmiş Hali)
+// 7. DATA SEEDING (ARTIK TEK SATIR!)
+// Tüm karmaşık lojik DbSeeder.cs içine taşındı. Burası tertemiz.
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<ApplicationDbContext>();
-        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-
-        // Rolleri Oluştur
-        if (!roleManager.RoleExistsAsync("Admin").Result) roleManager.CreateAsync(new IdentityRole("Admin")).Wait();
-        if (!roleManager.RoleExistsAsync("Ciftci").Result) roleManager.CreateAsync(new IdentityRole("Ciftci")).Wait();
-        if (!roleManager.RoleExistsAsync("User").Result) roleManager.CreateAsync(new IdentityRole("User")).Wait();
-
-        // Admin Kullanıcısı
-        var adminEmail = "MelihTest@gmail.com";
-        var adminUser = userManager.FindByEmailAsync(adminEmail).Result;
-
-        if (adminUser == null)
-        {
-            adminUser = new ApplicationUser
-            {
-                UserName = adminEmail,
-                Email = adminEmail,
-                EmailConfirmed = true,
-                TamAd = "Melih Admin" // <--- DÜZELTİLEN KISIM BURASI
-            };
-            var result = userManager.CreateAsync(adminUser, "Admin123!").Result;
-
-            if (result.Succeeded)
-            {
-                userManager.AddToRoleAsync(adminUser, "Admin").Wait();
-            }
-        }
-
-        if (adminUser != null)
-        {
-            var merkez = context.Lokasyonlar.FirstOrDefault(x => x.Ad == "Merkez");
-            if (merkez == null)
-            {
-                merkez = new Lokasyon { Ad = "Merkez" };
-                context.Lokasyonlar.Add(merkez);
-                context.SaveChanges();
-            }
-
-            if (!context.Tarlalar.Any(t => t.ApplicationUserId == adminUser.Id))
-            {
-                context.Tarlalar.AddRange(
-                    new Tarla { Ad = "Büyük Ova", AlanDonum = 120, TapuAdaParsel = "101/5", LokasyonId = merkez.Id, ApplicationUserId = adminUser.Id },
-                    new Tarla { Ad = "Dere Kenarı", AlanDonum = 45.5m, TapuAdaParsel = "203/1", LokasyonId = merkez.Id, ApplicationUserId = adminUser.Id }
-                );
-                context.SaveChanges();
-            }
-        }
+        // DbSeeder sınıfındaki Seed metodunu çağırıyoruz
+        await DbSeeder.Seed(scope.ServiceProvider);
     }
     catch (Exception ex)
     {
         Console.WriteLine("************* SEED HATA *************");
         Console.WriteLine(ex.Message);
+        if (ex.InnerException != null) Console.WriteLine(ex.InnerException.Message);
     }
 }
 
